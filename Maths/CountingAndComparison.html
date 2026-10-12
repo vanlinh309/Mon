@@ -1,0 +1,659 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Count Carefully</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Lexend:wght@400;500;600&display=swap">
+<style>
+/* Layout: a squared-paper exercise book; one worksheet card at a time, picture on a printed sheet, red-pen marking. */
+:root {
+  --paper: #f6f8fc;
+  --grid: #e1e8f3;
+  --card: #ffffff;
+  --ink: #1d2742;
+  --muted: #5a6683;
+  --line: #ccd6e6;
+  --accent: #2c56c9;
+  --accent-ink: #ffffff;
+  --accent-soft: #e6edfc;
+  --mark: #cf3f2a;
+  --mark-soft: #fbe9e5;
+  --good: #23824f;
+  --good-soft: #e3f4ea;
+  --sheet: #fffdf5;
+  --pic-ink: #1d2742;
+  --font-display: "Baloo 2", "Trebuchet MS", system-ui, sans-serif;
+  --font-body: "Lexend", "Segoe UI", system-ui, sans-serif;
+  --radius: 14px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #121829; --grid: #1b2338; --card: #192137; --ink: #e7ecf7; --muted: #9ba7c3;
+    --line: #2d3853; --accent: #86a6ff; --accent-ink: #0f1526; --accent-soft: #23305a;
+    --mark: #ff7d66; --mark-soft: #3b2224; --good: #5fcf8f; --good-soft: #1b3428;
+    --sheet: #f3eee1; --pic-ink: #1d2742; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #121829; --grid: #1b2338; --card: #192137; --ink: #e7ecf7; --muted: #9ba7c3;
+  --line: #2d3853; --accent: #86a6ff; --accent-ink: #0f1526; --accent-soft: #23305a;
+  --mark: #ff7d66; --mark-soft: #3b2224; --good: #5fcf8f; --good-soft: #1b3428;
+  --sheet: #f3eee1; --pic-ink: #1d2742; color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background-color: var(--paper);
+  background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 26px 26px;
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.5;
+  min-height: 100vh;
+}
+.wrap { max-width: 980px; margin: 0 auto; padding-inline: 16px; padding-block: 24px 48px; display: flex; flex-direction: column; gap: 20px; }
+h1, h2, h3 { font-family: var(--font-display); line-height: 1.1; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+button { font: inherit; color: inherit; cursor: pointer; }
+button:focus-visible, input:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+/* top bar */
+.bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.brand { display: flex; align-items: baseline; gap: 10px; }
+.brand h1 { font-size: 30px; font-weight: 800; }
+.brand span { color: var(--muted); font-size: 14px; }
+.link-btn { background: none; border: 0; color: var(--accent); font-weight: 600; padding: 8px 4px; min-height: 44px; }
+
+/* home */
+.intro { max-width: 60ch; color: var(--muted); }
+.hw-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr)); gap: 20px; }
+.hw { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 22px; display: flex; flex-direction: column; gap: 16px; }
+.eyebrow { font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--mark); }
+.hw h2 { font-size: 28px; font-weight: 800; }
+.hw p { color: var(--muted); }
+.hw-art { height: 92px; background: var(--sheet); border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+.hw-art svg { height: 70px; width: auto; }
+.lessons { display: flex; flex-direction: column; gap: 10px; }
+.lesson-btn { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; min-height: 56px; padding: 10px 16px; border-radius: 12px; border: 2px solid var(--line); background: var(--card); text-align: left; font-weight: 600; }
+.lesson-btn:hover { border-color: var(--accent); }
+.lesson-btn small { display: block; font-weight: 400; color: var(--muted); font-size: 13px; }
+.done-tag { font-size: 13px; font-weight: 600; color: var(--good); background: var(--good-soft); padding: 4px 10px; border-radius: 999px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.todo-tag { font-size: 13px; color: var(--muted); white-space: nowrap; }
+
+/* lesson */
+.sheet-card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; display: flex; flex-direction: column; gap: 18px; }
+.q-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.q-head h2 { font-size: 26px; font-weight: 800; }
+.dots { display: flex; gap: 8px; }
+.dot { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--line); }
+.dot.now { border-color: var(--accent); background: var(--accent-soft); }
+.dot.first { background: var(--good); border-color: var(--good); }
+.dot.second { background: var(--card); border-color: var(--good); }
+.dot.shown { background: var(--mark); border-color: var(--mark); }
+.prompt { color: var(--muted); max-width: 60ch; }
+.q-body { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 20px; align-items: start; }
+.q-body.single { grid-template-columns: minmax(0, 1fr); }
+@media (max-width: 720px) { .q-body { grid-template-columns: minmax(0, 1fr); } }
+.pic { background: var(--sheet); border-radius: 12px; padding: 8px; border: 1px solid var(--line); }
+.pic svg { display: block; width: 100%; height: auto; max-width: 100%; }
+.pic .shapes { fill: #ffffff; stroke: #000000; stroke-width: 3; stroke-linejoin: round; }
+.pic { background: #ffffff; }
+.hw-art { background: #ffffff; }
+.hw-art .shapes { fill: #ffffff; stroke: #000000; stroke-width: 4; stroke-linejoin: round; }
+.hw-art .lines { stroke: #000000; stroke-width: 3; }
+
+/* homework 1: all pictures on one page */
+.sticky-score { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 2; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-weight: 600; font-variant-numeric: tabular-nums; }
+.sticky-score .dots { flex-wrap: wrap; gap: 6px; }
+.sticky-score .dots .gap { width: 10px; }
+.lesson-title { font-size: 30px; font-weight: 800; padding-top: 12px; }
+.pic-list { display: flex; flex-direction: column; gap: 20px; }
+.pic .lines { stroke: #000000; stroke-width: 2.5; stroke-linecap: round; fill: none; }
+.pic-name { font-family: var(--font-display); font-size: 18px; font-weight: 600; color: #000000; text-align: center; padding-top: 4px; }
+
+/* count rows */
+.rows { display: flex; flex-direction: column; gap: 10px; }
+.row { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 8px 10px; border-radius: 12px; border: 2px solid var(--line); }
+.row svg { width: 36px; height: 36px; }
+.row svg * { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 3; }
+.row label { font-weight: 600; }
+.row .ans { display: block; font-size: 13px; font-weight: 600; }
+.row.right { border-color: var(--good); }
+.row.right .ans { color: var(--good); }
+.row.wrong { border-color: var(--mark); }
+.row.wrong .ans { color: var(--mark); }
+.stepper { display: flex; align-items: center; gap: 6px; }
+.step { width: 44px; height: 48px; border-radius: 10px; border: 2px solid var(--line); background: var(--card); font-size: 22px; font-weight: 600; line-height: 1; }
+.step:hover:not(:disabled) { border-color: var(--accent); }
+.num { width: 58px; height: 48px; border-radius: 10px; border: 2px solid var(--ink); background: var(--card); color: var(--ink); text-align: center; font-family: var(--font-display); font-size: 26px; font-weight: 800; font-variant-numeric: tabular-nums; }
+
+/* fill-in */
+.expr { display: flex; align-items: center; justify-content: center; gap: 14px; flex-wrap: wrap; font-family: var(--font-display); font-size: 64px; font-weight: 800; line-height: 1; padding-block: 18px; background: var(--sheet); color: var(--pic-ink); border-radius: 12px; border: 1px solid var(--line); }
+.expr .op { color: var(--mark); }
+.box { width: 96px; height: 96px; display: inline-flex; align-items: center; justify-content: center; border: 4px dashed var(--pic-ink); border-radius: 14px; background: #ffffff; color: #8a93a8; }
+.chips-label { font-weight: 600; }
+.chips { display: flex; flex-wrap: wrap; gap: 14px; min-height: 56px; align-items: center; padding-top: 8px; }
+.chips .empty { color: var(--muted); font-size: 14px; }
+.chip { position: relative; display: inline-flex; align-items: center; justify-content: center; min-width: 56px; height: 52px; padding: 0 14px; border-radius: 12px; border: 3px solid var(--ink); background: var(--card); font-family: var(--font-display); font-size: 26px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.chip .x { position: absolute; top: -10px; right: -10px; width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--card); background: var(--ink); color: var(--card); font-family: var(--font-body); font-size: 12px; font-weight: 600; line-height: 1; display: flex; align-items: center; justify-content: center; padding: 0; }
+.chip .x::before { content: ""; position: absolute; inset: -8px; }
+.chip.right { border-color: var(--good); color: var(--good); background: var(--good-soft); }
+.chip.wrong { border-color: var(--mark); color: var(--mark); background: var(--mark-soft); }
+.chip.missed { border-style: dashed; border-color: var(--good); color: var(--good); }
+.chip.pulse { animation: pulse .4s; }
+@keyframes pulse { 50% { transform: scale(1.15); } }
+.keypad { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; max-width: 440px; }
+.key { height: 56px; border-radius: 12px; border: 2px solid var(--line); background: var(--card); font-family: var(--font-display); font-size: 26px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.key:hover:not(:disabled) { border-color: var(--accent); }
+.key:active:not(:disabled) { background: var(--accent-soft); }
+.legend-note { color: var(--muted); font-size: 14px; }
+
+/* actions + feedback */
+.actions { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; border-top: 2px dashed var(--line); padding-top: 16px; }
+.primary { min-height: 56px; padding: 0 28px; border-radius: 12px; border: 0; background: var(--accent); color: var(--accent-ink); font-size: 18px; font-weight: 600; }
+.secondary { min-height: 56px; padding: 0 22px; border-radius: 12px; border: 2px solid var(--line); background: var(--card); font-size: 16px; font-weight: 600; }
+.feedback { flex: 1 1 240px; min-width: 0; font-weight: 600; padding: 12px 14px; border-radius: 12px; }
+.feedback:empty { display: none; }
+.feedback.info { background: var(--accent-soft); color: var(--ink); }
+.feedback.retry { background: var(--mark-soft); color: var(--mark); }
+.feedback.correct { background: var(--good-soft); color: var(--good); }
+.feedback.shown { background: var(--mark-soft); color: var(--ink); }
+button:disabled { opacity: .45; cursor: default; }
+
+/* summary */
+.summary { text-align: center; align-items: center; padding-block: 36px; }
+.summary .score { font-family: var(--font-display); font-size: 72px; font-weight: 800; line-height: 1; color: var(--mark); font-variant-numeric: tabular-nums; }
+.summary .dots .dot { width: 22px; height: 22px; }
+.legend { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; color: var(--muted); font-size: 13px; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend .dot { width: 12px; height: 12px; }
+.sum-actions { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+
+@media (max-width: 480px) {
+  .expr { font-size: 46px; gap: 10px; }
+  .box { width: 76px; height: 76px; }
+  .key { height: 50px; font-size: 22px; }
+  .brand h1 { font-size: 26px; }
+}
+@media (prefers-reduced-motion: reduce) { .chip.pulse { animation: none; } }
+</style>
+
+<div class="wrap" id="app"></div>
+
+<script>
+(function () {
+  // ---------- shapes ----------
+  const R = (x, y, w, h) => ({ t: 'rect', x, y, w, h });
+  const S = (x, y, s) => ({ t: 'square', x, y, w: s, h: s });
+  const C = (x, y, r) => ({ t: 'circle', x, y, r });
+  const T = p => ({ t: 'triangle', p });
+
+  const TYPES = [
+    { key: 'rect', label: 'Rectangles', icon: '<rect x="3" y="10" width="30" height="16" rx="1"/>' },
+    { key: 'square', label: 'Squares', icon: '<rect x="7" y="7" width="22" height="22" rx="1"/>' },
+    { key: 'circle', label: 'Circles', icon: '<circle cx="18" cy="18" r="13"/>' },
+    { key: 'triangle', label: 'Triangles', icon: '<polygon points="18,5 32,30 4,30"/>' }
+  ];
+
+  // Shapes are drawn in order: later shapes sit on top. Answer keys are derived from this data.
+  const SCENES = [
+    { name: 'House', shapes: [
+      C(60, 55, 28),
+      R(330, 210, 18, 60), C(339, 185, 32),
+      R(53, 240, 12, 30), T([20, 245, 98, 245, 59, 170]),
+      S(130, 130, 140),
+      T([115, 130, 285, 130, 200, 55]),
+      R(237, 60, 18, 44),
+      C(200, 105, 12),
+      S(145, 150, 35), S(220, 150, 35),
+      T([178, 200, 222, 200, 200, 186]),
+      R(185, 200, 30, 70),
+      R(170, 270, 60, 10)
+    ] },
+    { name: 'Spaceship', shapes: [
+      C(330, 60, 30),
+      C(40, 40, 6), C(70, 255, 6), C(365, 260, 6),
+      S(15, 140, 28),
+      T([150, 120, 230, 120, 150, 70]), T([150, 180, 230, 180, 150, 230]),
+      T([86, 129, 86, 143, 58, 136]), T([86, 157, 86, 171, 58, 164]),
+      R(86, 129, 34, 14), R(86, 157, 34, 14),
+      R(120, 120, 170, 60),
+      T([290, 120, 290, 180, 350, 150]),
+      S(140, 136, 28), S(180, 136, 28),
+      C(250, 150, 18)
+    ] },
+    { name: 'Car', shapes: [
+      C(350, 50, 25),
+      R(250, 55, 6, 40),
+      T([256, 55, 256, 75, 282, 65]),
+      R(120, 95, 150, 55),
+      S(135, 105, 38), S(215, 105, 38),
+      R(60, 150, 280, 70),
+      S(322, 162, 16),
+      R(60, 161, 10, 26),
+      C(120, 225, 30), C(280, 225, 30),
+      C(120, 225, 12), C(280, 225, 12),
+      T([15, 270, 45, 270, 30, 230]), T([355, 270, 385, 270, 370, 230])
+    ] },
+    { name: 'Robot', shapes: [
+      R(196, 14, 8, 28), C(200, 12, 8),
+      S(150, 40, 100),
+      C(178, 78, 12), C(222, 78, 12),
+      T([200, 88, 191, 102, 209, 102]),
+      R(170, 112, 60, 14),
+      R(50, 155, 60, 22), R(290, 155, 60, 22),
+      C(44, 166, 14), C(356, 166, 14),
+      R(153, 225, 24, 56), R(223, 225, 24, 56),
+      R(110, 145, 180, 80),
+      S(145, 170, 24), S(185, 170, 24), C(245, 182, 14)
+    ] },
+    { name: 'Train', lines: [[0, 234, 400, 234]], shapes: [
+      R(10, 154, 110, 46), T([25, 154, 105, 154, 65, 115]),
+      C(38, 215, 18), C(92, 215, 18),
+      R(120, 180, 25, 8),
+      S(145, 110, 90), S(170, 125, 40),
+      R(293, 111, 18, 45),
+      R(235, 156, 100, 44),
+      T([335, 160, 335, 200, 370, 200]),
+      C(302, 75, 12), C(325, 50, 16), C(358, 24, 18),
+      C(175, 215, 18), C(225, 215, 18), C(300, 215, 18)
+    ] },
+    { name: 'Castle', lines: [[80, 45, 80, 20], [320, 45, 320, 20]], shapes: [
+      C(200, 50, 22),
+      T([80, 20, 80, 36, 102, 28]), T([320, 20, 320, 36, 342, 28]),
+      R(50, 100, 60, 150), R(290, 100, 60, 150),
+      T([45, 100, 115, 100, 80, 45]), T([285, 100, 355, 100, 320, 45]),
+      R(110, 170, 180, 80),
+      S(118, 148, 22), S(162, 148, 22), S(206, 148, 22), S(250, 148, 22),
+      C(80, 140, 10), C(320, 140, 10),
+      C(145, 205, 12),
+      R(185, 184, 30, 66)
+    ] },
+    { name: 'Rocket', shapes: [
+      S(40, 40, 12), S(335, 70, 12), S(55, 205, 12),
+      C(80, 115, 30), C(330, 170, 24),
+      T([180, 248, 220, 248, 200, 292]),
+      R(180, 230, 40, 18),
+      T([170, 180, 170, 230, 130, 230]), T([230, 180, 230, 230, 270, 230]),
+      R(170, 80, 60, 150),
+      T([170, 80, 230, 80, 200, 20]),
+      C(200, 120, 16), C(200, 165, 12),
+      S(188, 196, 24)
+    ] },
+    { name: 'Sailboat', shapes: [
+      C(340, 55, 28),
+      R(196, 50, 8, 150),
+      T([204, 50, 204, 66, 228, 58]),
+      T([204, 72, 204, 190, 290, 190]),
+      T([196, 90, 196, 190, 130, 190]),
+      T([90, 200, 90, 245, 60, 200]), T([310, 200, 310, 245, 340, 200]),
+      R(90, 200, 220, 45),
+      S(128, 212, 20), C(200, 222, 10), S(250, 212, 20),
+      R(355, 150, 30, 100),
+      T([350, 150, 390, 150, 370, 122]),
+      S(362, 180, 16)
+    ] },
+    { name: 'Cat', lines: [[150, 122, 185, 125], [150, 132, 185, 130], [250, 122, 215, 125], [250, 132, 215, 130]], shapes: [
+      S(40, 40, 50),
+      C(70, 240, 28),
+      T([330, 265, 380, 265, 380, 235]),
+      R(260, 200, 70, 16), C(335, 208, 10),
+      R(135, 165, 130, 56),
+      S(148, 221, 26), S(226, 221, 26),
+      C(200, 110, 55),
+      T([152, 78, 182, 60, 150, 30]), T([248, 78, 218, 60, 250, 30]),
+      C(180, 100, 9), C(220, 100, 9),
+      T([192, 120, 208, 120, 200, 130]),
+      R(165, 160, 70, 12), C(200, 178, 7)
+    ] },
+    { name: 'Truck', shapes: [
+      T([5, 240, 35, 240, 20, 200]),
+      R(40, 125, 200, 85),
+      C(70, 148, 12),
+      T([60, 195, 130, 195, 95, 148]), T([140, 195, 220, 195, 180, 138]),
+      R(244, 90, 10, 40),
+      S(240, 130, 80),
+      S(272, 142, 36),
+      R(320, 184, 60, 26),
+      C(370, 197, 6),
+      R(372, 205, 18, 8),
+      C(85, 225, 25), C(195, 225, 25), C(300, 225, 25)
+    ] }
+  ];
+
+  function countsOf(scene) {
+    const c = { rect: 0, square: 0, circle: 0, triangle: 0 };
+    scene.shapes.forEach(s => { c[s.t]++; });
+    return c;
+  }
+
+  // Guard the answer keys: every picture must follow the worksheet rules.
+  SCENES.forEach(sc => {
+    const c = countsOf(sc), total = sc.shapes.length;
+    if (total < 13 || total > 18) console.error(`[${sc.name}] has ${total} shapes; must be 13–18`);
+    TYPES.forEach(t => { if (!c[t.key]) console.error(`[${sc.name}] has no ${t.label.toLowerCase()}`); });
+    sc.shapes.forEach(s => {
+      if (s.t === 'square' && s.w !== s.h) console.error(`[${sc.name}] square is not square`, s);
+      if (s.t === 'rect' && Math.max(s.w, s.h) / Math.min(s.w, s.h) < 2.2) console.error(`[${sc.name}] rectangle looks too square`, s);
+    });
+  });
+
+  function shapeMarkup(s) {
+    if (s.t === 'circle') return `<circle cx="${s.x}" cy="${s.y}" r="${s.r}"/>`;
+    if (s.t === 'triangle') return `<polygon points="${s.p.join(' ')}"/>`;
+    return `<rect x="${s.x}" y="${s.y}" width="${s.w}" height="${s.h}"/>`;
+  }
+  function sceneSVG(sc, label) {
+    const lines = (sc.lines || []).map(l => `<line x1="${l[0]}" y1="${l[1]}" x2="${l[2]}" y2="${l[3]}"/>`).join('');
+    return `<svg viewBox="0 0 400 300" role="img" aria-label="${label || sc.name}">` +
+      `<g class="lines">${lines}</g><g class="shapes">${sc.shapes.map(shapeMarkup).join('')}</g></svg>`;
+  }
+
+  // ---------- number questions ----------
+  const CMP = { '>': (a, b) => a > b, '<': (a, b) => a < b };
+  function solve(tokens) {
+    const out = [];
+    for (let n = 0; n <= 10; n++) {
+      const v = tokens.map(t => (t === '?' ? n : t));
+      let ok = true;
+      for (let i = 1; i < v.length; i += 2) if (!CMP[v[i]](v[i - 1], v[i + 1])) ok = false;
+      if (ok) out.push(n);
+    }
+    return out;
+  }
+  const Q1 = [[9, '>', '?', '>', 5], ['?', '<', 3], [6, '>', '?', '>', 4], [2, '<', '?', '<', 7], [8, '<', '?']];
+  const Q2 = [[10, '>', '?', '>', 6], ['?', '>', 7], [3, '<', '?', '<', 5], [5, '>', '?'], [1, '<', '?', '<', 6]];
+
+  const HOMEWORK = [
+    { id: 'shapes', kind: 'count', no: 1, title: 'Count the Shapes',
+      blurb: 'Look at each picture slowly. Count every rectangle, square, circle and triangle.',
+      lessons: [SCENES.slice(0, 5), SCENES.slice(5, 10)] },
+    { id: 'numbers', kind: 'fill', no: 2, title: 'Find the Numbers',
+      blurb: 'Put numbers from 0 to 10 in the box so the sentence is true. Some boxes take more than one number.',
+      lessons: [Q1.map(t => ({ tokens: t, answer: solve(t) })), Q2.map(t => ({ tokens: t, answer: solve(t) }))] }
+  ];
+
+  // ---------- progress (per browser) ----------
+  const STORE = 'count-carefully-v1';
+  let progress = {};
+  try { progress = JSON.parse(localStorage.getItem(STORE) || '{}') || {}; } catch (e) { progress = {}; }
+  function saveProgress() { try { localStorage.setItem(STORE, JSON.stringify(progress)); } catch (e) { /* storage unavailable */ } }
+
+  // ---------- state ----------
+  const app = document.getElementById('app');
+  let page = null; // { hw, items, state[], submitMsg }
+
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const opSym = o => (o === '>' ? '&gt;' : '&lt;');
+  const NUMBERS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+
+  function header(showBack) {
+    return `<div class="bar"><div class="brand"><h1>Count Carefully</h1><span>math homework</span></div>` +
+      (showBack ? `<button class="link-btn" id="back">← All homework</button>` : '') + `</div>`;
+  }
+
+  // ---------- home ----------
+  const homeArt = {
+    shapes: sceneSVG(SCENES[0]).replace('<svg ', '<svg aria-hidden="true" '),
+    numbers: `<svg viewBox="0 0 220 60" aria-hidden="true" style="font-family:var(--font-display);font-weight:800"><text x="10" y="46" font-size="44" fill="#1d2742">9</text><text x="44" y="46" font-size="44" fill="#cf3f2a">&gt;</text><rect x="82" y="8" width="46" height="46" rx="8" fill="#fff" stroke="#1d2742" stroke-width="3" stroke-dasharray="7 5"/><text x="140" y="46" font-size="44" fill="#cf3f2a">&gt;</text><text x="178" y="46" font-size="44" fill="#1d2742">5</text></svg>`
+  };
+
+  function renderHome() {
+    page = null;
+    app.innerHTML = header(false) +
+      `<p class="intro">Two homework sets. Take your time: you can check each answer, and if it is not right you get one more try.</p>` +
+      `<div class="hw-grid">` + HOMEWORK.map(hw => {
+        const tags = hw.lessons.map((items, li) => {
+          const p = progress[`${hw.id}-${li}`];
+          return p ? `<span class="done-tag">✓ L${li + 1} best ${p.best}/${items.length}</span>` : '';
+        }).join(' ');
+        const total = hw.lessons.flat().length, noun = hw.kind === 'count' ? 'pictures' : 'questions';
+        return `
+        <section class="hw">
+          <div class="eyebrow">Homework ${hw.no}</div>
+          <h2>${hw.title}</h2>
+          <p>${hw.blurb}</p>
+          <div class="hw-art">${homeArt[hw.id]}</div>
+          <div class="lessons"><button class="lesson-btn" data-hw="${hw.id}"><span>Lessons 1 and 2<small>All ${total} ${noun} on one page</small></span><span>${tags || `<span class="todo-tag">${total} ${noun}</span>`}</span></button></div>
+        </section>`;
+      }).join('') + `</div>`;
+    app.querySelectorAll('.lesson-btn').forEach(b => b.addEventListener('click', () => startPage(HOMEWORK.find(h => h.id === b.dataset.hw))));
+  }
+
+  // ---------- one page per homework: every item, per-item Check, one Submit ----------
+  function startPage(hw) {
+    const items = hw.lessons.flat();
+    page = { hw, items, submitMsg: null,
+      state: items.map(() => ({ counts: { rect: '', square: '', circle: '', triangle: '' }, picks: [], marks: {}, attempts: 0, status: 'open', message: null })) };
+    renderPage();
+    window.scrollTo(0, 0);
+  }
+
+  const isCount = () => page.hw.kind === 'count';
+  const itemName = i => (isCount() ? page.items[i].name : `Question ${(i % 5) + 1}`);
+  const isEmpty = i => (isCount() ? TYPES.some(t => page.state[i].counts[t.key] === '') : !page.state[i].picks.length);
+
+  function scoreMarkup() {
+    const st = page.state;
+    const done = st.filter(p => p.status !== 'open').length;
+    const first = st.filter(p => p.status === 'first').length;
+    const dots = st.map((p, i) => (i === 5 ? '<span class="gap"></span>' : '') +
+      `<span class="dot ${p.status === 'open' ? '' : p.status}"></span>`).join('');
+    return `<span>Checked ${done} of ${st.length} · First try ${first}</span><div class="dots" aria-hidden="true">${dots}</div>`;
+  }
+
+  function countBody(i) {
+    const sc = page.items[i], st = page.state[i], key = countsOf(sc);
+    const resolved = st.status !== 'open';
+    const rows = TYPES.map(t => {
+      const v = st.counts[t.key];
+      let cls = '', ans = '';
+      if (st.status === 'shown') {
+        const ok = +v === key[t.key];
+        cls = ok ? 'right' : 'wrong';
+        ans = `<span class="ans">${ok ? '✓ Right' : `Answer: ${key[t.key]}`}</span>`;
+      } else if (resolved) cls = 'right';
+      const dis = resolved ? 'disabled' : '';
+      return `<div class="row ${cls}">
+        <svg viewBox="0 0 36 36" aria-hidden="true">${t.icon}</svg>
+        <div><label for="cnt-${i}-${t.key}">${t.label}</label>${ans}</div>
+        <div class="stepper">
+          <button class="step" data-step="-1" data-k="${t.key}" aria-label="One less ${t.label.toLowerCase()}" ${dis}>−</button>
+          <input class="num" id="cnt-${i}-${t.key}" data-k="${t.key}" inputmode="numeric" maxlength="2" autocomplete="off" value="${esc(v)}" ${dis}>
+          <button class="step" data-step="1" data-k="${t.key}" aria-label="One more ${t.label.toLowerCase()}" ${dis}>+</button>
+        </div></div>`;
+    }).join('');
+    return `<div class="q-body"><div class="pic">${sceneSVG(sc, `Picture of a ${sc.name.toLowerCase()} made of shapes`)}<div class="pic-name">${sc.name}</div></div><div class="rows">${rows}</div></div>`;
+  }
+
+  function fillBody(i) {
+    const q = page.items[i], st = page.state[i];
+    const resolved = st.status !== 'open';
+    const expr = q.tokens.map(t => {
+      if (t === '?') return `<span class="box" aria-label="missing number">?</span>`;
+      if (t === '>' || t === '<') return `<span class="op">${opSym(t)}</span>`;
+      return `<span>${t}</span>`;
+    }).join('');
+    let chips;
+    if (st.status === 'shown') {
+      const all = [...new Set([...st.picks, ...q.answer])].sort((a, b) => a - b);
+      chips = all.map(n => {
+        const picked = st.picks.includes(n), good = q.answer.includes(n);
+        return `<span class="chip ${picked && good ? 'right' : picked ? 'wrong' : 'missed'}">${n}</span>`;
+      }).join('');
+    } else if (st.picks.length) {
+      chips = st.picks.map(n => `<span class="chip ${resolved ? 'right' : st.marks[n] || ''}" data-chip="${n}">${n}` +
+        (resolved ? '' : `<button class="x" data-remove="${n}" aria-label="Remove ${n}">✕</button>`) + `</span>`).join('');
+    } else chips = `<span class="empty">Tap the numbers below that make it true.</span>`;
+    return `<div class="expr">${expr}</div>
+      <div><div class="chips-label">Your numbers</div><div class="chips">${chips}</div>
+      ${st.status === 'shown' ? '<p class="legend-note">Green numbers fit. Red ones do not fit. Dashed ones were missing.</p>' : ''}</div>
+      ${resolved ? '' : `<div class="keypad">${NUMBERS.map(n => `<button class="key" data-num="${n}">${n}</button>`).join('')}</div>`}`;
+  }
+
+  function cardMarkup(i) {
+    const st = page.state[i], msg = st.message;
+    const title = isCount() ? `Picture ${(i % 5) + 1}: ${page.items[i].name}` : `Question ${(i % 5) + 1}`;
+    return `<section class="sheet-card" id="card-${i}">
+      <div class="q-head"><h2>${esc(title)}</h2></div>
+      ${isCount() ? countBody(i) : fillBody(i)}
+      <div class="actions">
+        ${st.status !== 'open' ? '' : `<button class="primary" data-check>Check</button>`}
+        <div class="feedback ${msg ? msg.kind : ''}" role="status" aria-live="polite">${msg ? esc(msg.text) : ''}</div>
+      </div>
+    </section>`;
+  }
+
+  function bindCard(i) {
+    const card = document.getElementById(`card-${i}`), st = page.state[i];
+    if (isCount()) {
+      card.querySelectorAll('.num').forEach(inp => inp.addEventListener('input', () => {
+        inp.value = inp.value.replace(/\D/g, '').slice(0, 2);
+        st.counts[inp.dataset.k] = inp.value;
+      }));
+      card.querySelectorAll('.step').forEach(b => b.addEventListener('click', () => {
+        const k = b.dataset.k, cur = st.counts[k] === '' ? 0 : +st.counts[k];
+        st.counts[k] = String(st.counts[k] === '' && +b.dataset.step < 0 ? 0 : Math.max(0, Math.min(99, cur + +b.dataset.step)));
+        document.getElementById(`cnt-${i}-${k}`).value = st.counts[k];
+      }));
+    } else {
+      card.querySelectorAll('[data-num]').forEach(b => b.addEventListener('click', () => {
+        const n = +b.dataset.num;
+        if (st.picks.includes(n)) {
+          // Already picked: nudge the existing chip instead of adding a copy.
+          const chip = card.querySelector(`[data-chip="${n}"]`);
+          chip.classList.remove('pulse'); void chip.offsetWidth; chip.classList.add('pulse');
+          return;
+        }
+        st.picks.push(n);
+        refreshCard(i);
+      }));
+      card.querySelectorAll('[data-remove]').forEach(b => b.addEventListener('click', () => {
+        const n = +b.dataset.remove;
+        st.picks = st.picks.filter(x => x !== n);
+        delete st.marks[n];
+        refreshCard(i);
+      }));
+    }
+    const check = card.querySelector('[data-check]');
+    if (check) check.addEventListener('click', () => { gradeCard(i); refreshCard(i); afterGrading(); });
+  }
+
+  function refreshCard(i) {
+    document.getElementById(`card-${i}`).outerHTML = cardMarkup(i);
+    bindCard(i);
+  }
+
+  function gradeCard(i) {
+    const st = page.state[i], item = page.items[i];
+    if (isEmpty(i)) {
+      st.message = { kind: 'info', text: isCount() ? 'Fill in all four boxes first.' : 'Tap at least one number first.' };
+      return;
+    }
+    let correct;
+    if (isCount()) {
+      const key = countsOf(item);
+      correct = TYPES.every(t => +st.counts[t.key] === key[t.key]);
+    } else {
+      st.picks.forEach(n => { st.marks[n] = item.answer.includes(n) ? 'right' : 'wrong'; });
+      correct = st.picks.length === item.answer.length && st.picks.every(n => item.answer.includes(n));
+    }
+    if (correct) {
+      st.status = st.attempts === 0 ? 'first' : 'second';
+      st.message = { kind: 'correct', text: st.attempts === 0 ? 'Correct on the first try. Great focus!' : 'Correct! Checking again paid off.' };
+    } else if (st.attempts === 0) {
+      st.attempts = 1;
+      st.message = { kind: 'retry', text: isCount() ? 'Not quite. Look carefully and try again.' : 'Not quite. Green numbers fit and red ones do not. Fix it and check again.' };
+    } else {
+      st.status = 'shown';
+      st.message = { kind: 'shown', text: 'Here is the answer. Look at it, then go on.' };
+    }
+  }
+
+  // Grades every unchecked item at once, using the same one-retry rule as each Check button.
+  function submitAll() {
+    const open = page.state.map((p, i) => i).filter(i => page.state[i].status === 'open');
+    const empty = open.filter(isEmpty);
+    if (empty.length) {
+      page.submitMsg = { kind: 'info', text: `Answer every ${isCount() ? 'picture' : 'question'} first. Still empty: ${empty.map(i => `Lesson ${Math.floor(i / 5) + 1} ${itemName(i)}`).join(', ')}.` };
+      renderSubmit();
+      document.getElementById(`card-${empty[0]}`).scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return;
+    }
+    open.forEach(i => { gradeCard(i); refreshCard(i); });
+    const fix = open.filter(i => page.state[i].status === 'open');
+    page.submitMsg = fix.length
+      ? { kind: 'retry', text: `${open.length - fix.length} right. Look again at: ${fix.map(i => `Lesson ${Math.floor(i / 5) + 1} ${itemName(i)}`).join(', ')}. Then submit again.` }
+      : null;
+    afterGrading();
+    if (fix.length) document.getElementById(`card-${fix[0]}`).scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function renderSubmit() {
+    const el = document.getElementById('page-submit');
+    if (page.state.every(p => p.status !== 'open')) { el.innerHTML = ''; return; }
+    const msg = page.submitMsg;
+    el.innerHTML = `<section class="sheet-card"><div class="actions">
+        <button class="primary" id="submit-all">Submit all ${isCount() ? 'pictures' : 'questions'}</button>
+        <div class="feedback ${msg ? msg.kind : ''}" role="status" aria-live="polite">${msg ? esc(msg.text) : ''}</div>
+      </div></section>`;
+    document.getElementById('submit-all').addEventListener('click', submitAll);
+  }
+
+  function endMarkup() {
+    if (page.state.some(p => p.status === 'open')) return '';
+    const first = page.state.filter(p => p.status === 'first').length;
+    return `<section class="sheet-card summary">
+      <div class="eyebrow">Homework ${page.hw.no} done</div>
+      <div class="score">${first}/${page.state.length}</div>
+      <h2>right on the first try</h2>
+      <div class="legend"><span><i class="dot first"></i>First try</span><span><i class="dot second"></i>Second try</span><span><i class="dot shown"></i>Answer shown</span></div>
+      <div class="sum-actions"><button class="secondary" id="again">Do it again</button><button class="primary" id="home">Back to homework</button></div>
+    </section>`;
+  }
+
+  function bindEnd() {
+    const again = document.getElementById('again');
+    if (!again) return;
+    again.addEventListener('click', () => startPage(page.hw));
+    document.getElementById('home').addEventListener('click', renderHome);
+  }
+
+  function afterGrading() {
+    document.getElementById('page-score').innerHTML = scoreMarkup();
+    page.hw.lessons.forEach((items, li) => {
+      const part = page.state.slice(li * 5, li * 5 + 5);
+      if (part.some(p => p.status === 'open')) return;
+      const k = `${page.hw.id}-${li}`, first = part.filter(p => p.status === 'first').length;
+      progress[k] = { best: Math.max(first, progress[k] ? progress[k].best : 0) };
+      saveProgress();
+    });
+    renderSubmit();
+    document.getElementById('page-end').innerHTML = endMarkup();
+    bindEnd();
+  }
+
+  function renderPage() {
+    const hw = page.hw;
+    const prompt = isCount()
+      ? 'Count each kind of shape in every picture. Squares have four equal sides; rectangles are long and thin. Tap Check under a picture, or fill in all of them and tap Submit at the bottom.'
+      : 'Which numbers from 0 to 10 make each sentence true? Tap every number that fits. Tap ✕ on a number to take it away. Tap Check under a question, or answer all of them and tap Submit at the bottom.';
+    const lesson = li => `<h2 class="lesson-title">Lesson ${li + 1}</h2><div class="pic-list">` +
+      page.items.map((_, i) => i).filter(i => Math.floor(i / 5) === li).map(cardMarkup).join('') + `</div>`;
+    app.innerHTML = header(true) +
+      `<div><div class="eyebrow">Homework ${hw.no} · ${hw.title}</div><p class="prompt">${prompt}</p></div>
+      <div class="sticky-score" id="page-score">${scoreMarkup()}</div>
+      ${hw.lessons.map((_, li) => lesson(li)).join('')}
+      <div id="page-submit"></div>
+      <div id="page-end">${endMarkup()}</div>`;
+    document.getElementById('back').addEventListener('click', renderHome);
+    page.items.forEach((_, i) => bindCard(i));
+    renderSubmit();
+    bindEnd();
+  }
+
+  renderHome();
+})();
+</script>
+
+</body></html>

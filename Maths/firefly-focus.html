@@ -1,0 +1,928 @@
+<title>Firefly Focus</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Grandstander:wght@600;800&family=Nunito:wght@400;600;800&display=swap">
+<style>
+/* Layout: one-screen night-garden app. Home = three game cards; each game fills the screen under a slim HUD. Deliberately single (night) theme. */
+:root {
+  --sky: #0f1f36;
+  --sky-2: #1a3456;
+  --panel: #1f3a5e;
+  --line: #2f5079;
+  --moon: #f6efd9;
+  --mist: #a9bdd3;
+  --gold: #ffcb52;
+  --leaf: #86d9a6;
+  --coral: #ff9a85;
+  --grass: #0b1a2c;
+  --ring: #e8590c;
+  --day: #dcf0f6;
+  --meadow: #cde6b4;
+  --sea: #bfe3ef;
+  --sea-2: #86c3da;
+  --road: #d4d6d2;
+  --space: #27335f;
+  --f-display: "Grandstander", "Trebuchet MS", system-ui, sans-serif;
+  --f-body: "Nunito", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  background-color: var(--sky);
+  background-image: radial-gradient(120% 80% at 50% 0%, var(--sky-2), var(--sky) 65%);
+  color: var(--moon);
+  font-family: var(--f-body);
+  font-size: 18px;
+  line-height: 1.45;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+  overflow: hidden;
+}
+#stars { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+#stars i { position: absolute; width: 2px; height: 2px; border-radius: 50%; background: var(--moon); opacity: .35; }
+.app {
+  position: relative; z-index: 1;
+  height: 100%; max-width: 980px; margin: 0 auto;
+  padding-inline: 16px; padding-block: 14px;
+  display: flex; flex-direction: column;
+}
+.screen { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 18px; }
+button { font: inherit; color: inherit; cursor: pointer; touch-action: manipulation; }
+button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
+h1, h2, h3 { font-family: var(--f-display); font-weight: 800; margin: 0; text-wrap: balance; line-height: 1.1; }
+p { margin: 0; }
+
+/* Buttons */
+.btn {
+  border: 0; border-radius: 999px; padding: 14px 28px;
+  font-family: var(--f-display); font-weight: 800; font-size: 1.35rem;
+  background: var(--gold); color: var(--sky);
+  box-shadow: 0 6px 0 color-mix(in srgb, var(--gold) 55%, var(--sky));
+  transition: transform .08s;
+}
+.btn:active { transform: translateY(4px); box-shadow: 0 2px 0 color-mix(in srgb, var(--gold) 55%, var(--sky)); }
+.btn.ghost { background: transparent; color: var(--moon); box-shadow: inset 0 0 0 2px var(--line); }
+.btn.small { font-size: 1rem; padding: 8px 16px; }
+
+/* Home */
+#home { overflow-y: auto; }
+.brand { display: flex; flex-direction: column; gap: 6px; padding-top: 6px; }
+.brand h1 { font-size: clamp(2.2rem, 7vw, 3.4rem); color: var(--gold); text-shadow: 0 0 24px color-mix(in srgb, var(--gold) 35%, transparent); }
+.brand p { color: var(--mist); font-size: 1.05rem; }
+.who { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.who span { color: var(--mist); font-weight: 700; }
+.chip { border: 2px solid var(--line); background: transparent; border-radius: 999px; padding: 8px 18px; font-weight: 800; }
+.chip[aria-pressed="true"] { background: var(--moon); color: var(--sky); border-color: var(--moon); }
+.cards { display: grid; grid-template-columns: 1fr; gap: 16px; }
+@media (min-width: 560px) { .cards { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 960px) { .cards { grid-template-columns: repeat(4, 1fr); } }
+.card {
+  text-align: left; border: 2px solid var(--line); background: var(--panel);
+  border-radius: 24px; padding: 16px; display: grid; gap: 10px;
+}
+.card:active { transform: scale(.98); }
+.card h3 { font-size: 1.6rem; }
+.card p { color: var(--mist); font-size: 1rem; }
+.card .meta { font-size: .85rem; letter-spacing: .06em; text-transform: uppercase; color: var(--gold); font-weight: 800; }
+.homefoot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding-bottom: 6px; }
+.homefoot p { color: var(--mist); }
+
+/* Card art */
+.art { height: 120px; border-radius: 16px; background: var(--sky); position: relative; overflow: hidden; }
+.art-ff i { position: absolute; width: 14px; height: 14px; border-radius: 50%; }
+.art-ff .g { background: var(--gold); box-shadow: 0 0 18px 8px color-mix(in srgb, var(--gold) 55%, transparent); }
+.art-ff .l { background: var(--leaf); box-shadow: 0 0 12px 5px color-mix(in srgb, var(--leaf) 45%, transparent); width: 10px; height: 10px; }
+.art-np { display: grid; grid-template-columns: repeat(3, 34px); gap: 6px; place-content: center; }
+.art-np b { height: 30px; border-radius: 8px; background: var(--panel); display: grid; place-items: center; font-family: var(--f-display); font-size: 1rem; }
+.art-np b.d { color: var(--gold); opacity: .5; background: transparent; }
+.art-rv { display: grid; place-items: center; font-size: 84px; line-height: 1; }
+.art-rv .cv { position: absolute; inset: 10px calc(50% - 50px); display: grid; grid-template-columns: repeat(4, 1fr); }
+.art-rv .cv i { background: var(--line); border: 1px solid var(--sky); }
+.art-rv .cv i.o { opacity: 0; }
+.art-sd { display: flex; gap: 8px; padding: 12px; }
+.art-sd div {
+  flex: 1; border-radius: 10px; background: linear-gradient(var(--day) 0 55%, var(--meadow) 55%);
+  display: flex; justify-content: space-around; align-items: center; font-size: 28px; line-height: 1;
+}
+.art-sd .ring { outline: 3px solid var(--ring); outline-offset: 4px; border-radius: 50%; }
+
+/* Intro + countdown */
+#intro { align-items: center; justify-content: center; text-align: center; overflow-y: auto; }
+#intro .art { width: min(100%, 340px); height: 170px; }
+#intro-art > .art { width: 100%; height: 100%; }
+#intro h2 { font-size: clamp(2rem, 6vw, 2.8rem); color: var(--gold); }
+#intro p { font-size: 1.3rem; max-width: 30ch; }
+.row { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
+#count { font-family: var(--f-display); font-weight: 800; font-size: 7rem; color: var(--gold); line-height: 1; }
+
+/* Game HUD */
+.hud { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.hud .stat { font-family: var(--f-display); font-weight: 800; font-size: 1.4rem; font-variant-numeric: tabular-nums; }
+.hud .stat small { font-family: var(--f-body); font-size: .8rem; color: var(--mist); letter-spacing: .06em; text-transform: uppercase; display: block; text-align: right; }
+.bar { height: 8px; border-radius: 99px; background: var(--panel); overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 100%; background: var(--mist); border-radius: 99px; }
+
+/* Firefly Watch */
+.arena {
+  flex: 1; min-height: 0; position: relative; overflow: hidden; border-radius: 24px;
+  background: linear-gradient(var(--sky), var(--sky-2));
+  user-select: none; -webkit-user-select: none; touch-action: manipulation;
+}
+.arena svg.grass { position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: 70px; }
+.fly {
+  position: absolute; width: 80px; height: 80px; margin: -40px 0 0 -40px;
+  border: 0; padding: 0; background: transparent; border-radius: 50%;
+  animation: flyLife var(--life) ease-in-out forwards;
+}
+.fly::before {
+  content: ""; position: absolute; inset: 28px; border-radius: 50%;
+  background: var(--leaf); box-shadow: 0 0 16px 7px color-mix(in srgb, var(--leaf) 50%, transparent);
+}
+.fly.gold::before { inset: 23px; background: var(--gold); box-shadow: 0 0 28px 13px color-mix(in srgb, var(--gold) 60%, transparent); }
+.fly.caught { animation: catchIt .4s forwards; }
+.fly.oops { animation: catchIt .4s forwards; }
+.fly.oops::before { background: var(--coral); box-shadow: none; }
+@keyframes flyLife {
+  0% { opacity: 0; scale: .5; translate: 0 0; }
+  15% { opacity: 1; scale: 1; }
+  80% { opacity: 1; }
+  100% { opacity: 0; translate: var(--dx) var(--dy); }
+}
+@keyframes catchIt { to { opacity: 0; scale: 1.8; } }
+
+/* Number Path */
+.find { text-align: center; font-family: var(--f-display); font-weight: 800; font-size: 1.3rem; color: var(--mist); }
+.find b { color: var(--gold); font-size: 2.6rem; vertical-align: middle; margin-left: 8px; }
+.np-wrap { flex: 1; min-height: 0; display: grid; place-items: center; }
+.np-grid { display: grid; gap: 10px; width: min(100%, 60vh, 540px); }
+.cell {
+  aspect-ratio: 1; border-radius: 18px; border: 2px solid var(--line); background: var(--panel);
+  font-family: var(--f-display); font-weight: 800; font-size: clamp(1.8rem, 7vw, 3.2rem);
+  user-select: none; -webkit-user-select: none;
+}
+.cell.done { background: transparent; border-color: transparent; color: var(--gold); opacity: .4; }
+.cell.shake { animation: shake .35s; border-color: var(--coral); }
+.cell.hint { animation: pulse 1.2s ease-in-out infinite; border-color: var(--gold); }
+@keyframes shake { 25% { translate: -6px 0; } 75% { translate: 6px 0; } }
+@keyframes pulse { 50% { box-shadow: 0 0 0 6px color-mix(in srgb, var(--gold) 35%, transparent); } }
+.dots { display: flex; gap: 8px; }
+.dots i { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--mist); }
+.dots i.on { background: var(--gold); border-color: var(--gold); }
+
+/* Slow Reveal */
+.rv-wrap { flex: 1; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; }
+.stage {
+  --s: min(78vw, 42vh, 380px);
+  width: var(--s); height: var(--s); position: relative; border-radius: 22px; overflow: hidden;
+  background: var(--moon); display: grid; place-items: center;
+  font-size: calc(var(--s) * .7); line-height: 1;
+}
+.covers { position: absolute; inset: 0; display: grid; }
+.covers i { background: var(--panel); border: 1px solid var(--sky); transition: opacity .5s; }
+.covers i.off { opacity: 0; }
+.choices { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
+.choice {
+  border: 2px solid var(--line); background: var(--panel); border-radius: 20px;
+  min-width: 104px; padding: 10px 14px; display: grid; justify-items: center; gap: 2px;
+  transition: opacity .3s;
+}
+.choice .e { font-size: 2.6rem; line-height: 1.1; }
+.choice .n { font-weight: 800; font-size: 1rem; }
+.choice:disabled { opacity: .35; cursor: default; }
+.choice.no { opacity: .15; }
+.choice.yes { border-color: var(--gold); background: color-mix(in srgb, var(--gold) 20%, var(--panel)); }
+.wait { color: var(--mist); font-weight: 700; min-height: 1.5em; }
+
+/* Spot the Difference */
+.sd-wrap { flex: 1; min-height: 0; display: flex; gap: 14px; align-items: center; justify-content: center; }
+.scene {
+  position: relative; aspect-ratio: 4 / 3; border-radius: 20px; overflow: hidden;
+  container-type: inline-size;
+  width: min(49%, calc((100vh - 230px) * 4 / 3));
+  background: linear-gradient(var(--day) 0 55%, var(--meadow) 55%);
+  user-select: none; -webkit-user-select: none; touch-action: manipulation;
+  transition: opacity .3s;
+}
+.scene.ocean { background: linear-gradient(var(--sea), var(--sea-2)); }
+.scene.town { background: linear-gradient(var(--day) 0 60%, var(--road) 60%); }
+.scene.space { background: var(--space); }
+.scene.locked { opacity: .5; pointer-events: none; }
+@media (orientation: portrait) {
+  .sd-wrap { flex-direction: column; }
+  .scene { width: min(100%, calc((100vh - 270px) / 2 * 4 / 3)); }
+}
+.slot {
+  position: absolute; border: 0; padding: 0; background: transparent;
+  width: calc(100% / var(--cols)); height: calc(100% / var(--rows));
+  display: grid; place-items: center;
+}
+.slot .e { display: block; line-height: 1; font-size: calc(100cqw / var(--cols) * .52); }
+.slot.found::after, .slot.hint::after {
+  content: ""; position: absolute; inset: 4%; border-radius: 50%;
+  border: 4px solid var(--ring); animation: ringIn .3s ease-out;
+}
+.slot.hint::after { border-style: dashed; animation: pulse 1.2s ease-in-out infinite; }
+@keyframes ringIn { from { scale: .4; opacity: 0; } }
+.miss {
+  position: absolute; width: 44px; height: 44px; margin: -22px 0 0 -22px; border-radius: 50%;
+  border: 3px solid var(--coral); pointer-events: none; animation: missFade .7s forwards;
+}
+@keyframes missFade { to { opacity: 0; scale: 1.5; } }
+#sd-msg { text-align: center; }
+
+/* Results */
+#results { align-items: center; justify-content: center; text-align: center; overflow-y: auto; }
+.stars { display: flex; gap: 10px; }
+.stars svg { width: 64px; height: 64px; }
+#res-title { font-size: clamp(2rem, 6vw, 2.8rem); color: var(--gold); }
+#res-lines { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; font-size: 1.15rem; }
+#res-lines li.note { color: var(--mist); font-size: 1rem; }
+
+/* Grown-ups */
+#grown { overflow-y: auto; }
+#grown section { background: var(--panel); border-radius: 20px; padding: 16px; display: grid; gap: 12px; }
+#grown h2 { font-size: 2rem; }
+#grown h3 { font-size: 1.2rem; }
+.field { display: grid; gap: 4px; }
+.field label { font-size: .85rem; letter-spacing: .06em; text-transform: uppercase; color: var(--mist); font-weight: 800; }
+.field input[type=text], .field select {
+  font: inherit; color: var(--moon); background: var(--sky); border: 2px solid var(--line);
+  border-radius: 12px; padding: 8px 12px; max-width: 320px;
+}
+.check { display: flex; align-items: center; gap: 10px; font-weight: 700; }
+.check input { width: 22px; height: 22px; accent-color: var(--gold); }
+.fields { display: flex; flex-wrap: wrap; gap: 16px; }
+.tablewrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: .95rem; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 6px 10px 6px 0; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { color: var(--mist); font-size: .78rem; letter-spacing: .06em; text-transform: uppercase; }
+.tip { color: var(--mist); font-size: .98rem; max-width: 65ch; }
+
+@media (prefers-reduced-motion: reduce) {
+  .fly { --dx: 0px !important; --dy: 0px !important; }
+  .cell.hint { animation: none; background: color-mix(in srgb, var(--gold) 25%, var(--panel)); }
+  .cell.shake { animation: none; }
+}
+</style>
+
+<div id="stars" aria-hidden="true"></div>
+<main class="app">
+
+  <!-- HOME -->
+  <div class="screen" id="home">
+    <div class="brand">
+      <h1>Firefly Focus</h1>
+      <p>Four short games for calm, steady attention. One or two minutes each.</p>
+    </div>
+    <div class="who" role="group" aria-label="Who's playing?">
+      <span>Who's playing?</span>
+      <button class="chip" id="p0" aria-pressed="true"></button>
+      <button class="chip" id="p1" aria-pressed="false"></button>
+    </div>
+    <div class="cards">
+      <button class="card" data-game="firefly">
+        <div class="art art-ff" aria-hidden="true">
+          <i class="g" style="left:22%;top:30%"></i><i class="l" style="left:58%;top:55%"></i>
+          <i class="l" style="left:78%;top:24%"></i><i class="g" style="left:44%;top:70%;width:10px;height:10px"></i>
+        </div>
+        <h3>Firefly Watch</h3>
+        <p>Tap only the golden fireflies. Let the green ones fly away.</p>
+        <span class="meta" data-level="firefly"></span>
+      </button>
+      <button class="card" data-game="number">
+        <div class="art art-np" aria-hidden="true">
+          <b class="d">1</b><b>7</b><b class="d">2</b><b>5</b><b>9</b><b class="d">3</b><b>4</b><b>8</b><b>6</b>
+        </div>
+        <h3>Number Path</h3>
+        <p>Find the numbers in order: 1, 2, 3 and on.</p>
+        <span class="meta" data-level="number"></span>
+      </button>
+      <button class="card" data-game="reveal">
+        <div class="art art-rv" aria-hidden="true">
+          <span>🐢</span>
+          <div class="cv"><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i><i class="o"></i><i></i><i></i><i class="o"></i><i></i></div>
+        </div>
+        <h3>Slow Reveal</h3>
+        <p>Watch the picture appear bit by bit. What is it?</p>
+        <span class="meta" data-level="reveal"></span>
+      </button>
+      <button class="card" data-game="spot">
+        <div class="art art-sd" aria-hidden="true">
+          <div><span>🍎</span><span>🐞</span><span>🌷</span></div>
+          <div><span>🍎</span><span class="ring">🐝</span><span>🌷</span></div>
+        </div>
+        <h3>Spot the Difference</h3>
+        <p>Two pictures, almost the same. Find what changed.</p>
+        <span class="meta" data-level="spot"></span>
+      </button>
+    </div>
+    <div class="homefoot">
+      <p id="today"></p>
+      <button class="btn ghost small" id="open-grown">Grown-ups</button>
+    </div>
+  </div>
+
+  <!-- INTRO -->
+  <div class="screen" id="intro" hidden>
+    <div class="art" id="intro-art" aria-hidden="true"></div>
+    <h2 id="intro-title"></h2>
+    <p id="intro-text"></p>
+    <div class="row" id="intro-btns">
+      <button class="btn" id="intro-start">Start</button>
+      <button class="btn ghost" id="intro-back">Back</button>
+    </div>
+    <div id="count" hidden></div>
+  </div>
+
+  <!-- FIREFLY WATCH -->
+  <div class="screen" id="g-firefly" hidden>
+    <div class="hud">
+      <button class="btn ghost small" data-stop>Stop</button>
+      <div class="stat"><small>Caught</small><span id="ff-caught">0</span></div>
+    </div>
+    <div class="bar"><i id="ff-bar"></i></div>
+    <div class="arena" id="ff-arena">
+      <svg class="grass" viewBox="0 0 400 70" preserveAspectRatio="none" aria-hidden="true">
+        <path fill="var(--grass)" d="M0 70V40q10-28 18 0 6-34 14 0 8-22 16 2 7-30 14-2 10-26 18 0 6-20 14 4 9-32 16-2 8-24 18 0 7-30 14 0 9-22 16 2 6-28 14-2 10-30 18 0 7-24 14 2 8-30 16-2 9-26 18 0 6-22 14 2 8-32 16-2 8-24 18 0 7-28 14 0 9-22 16 2 6-30 14-2 10-26 18 0 7-24 14 2 8-28 16-2 9-30 18 0V70Z"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- NUMBER PATH -->
+  <div class="screen" id="g-number" hidden>
+    <div class="hud">
+      <button class="btn ghost small" data-stop>Stop</button>
+      <div class="dots" id="np-dots" aria-label="Boards"></div>
+    </div>
+    <div class="find" aria-live="polite">Find <b id="np-next">1</b></div>
+    <div class="np-wrap"><div class="np-grid" id="np-grid"></div></div>
+  </div>
+
+  <!-- SLOW REVEAL -->
+  <div class="screen" id="g-reveal" hidden>
+    <div class="hud">
+      <button class="btn ghost small" data-stop>Stop</button>
+      <div class="dots" id="rv-dots" aria-label="Pictures"></div>
+    </div>
+    <div class="rv-wrap">
+      <div class="stage" id="rv-stage"><span id="rv-pic"></span><div class="covers" id="rv-covers"></div></div>
+      <p class="wait" id="rv-wait" aria-live="polite"></p>
+      <div class="choices" id="rv-choices"></div>
+    </div>
+  </div>
+
+  <!-- SPOT THE DIFFERENCE -->
+  <div class="screen" id="g-spot" hidden>
+    <div class="hud">
+      <button class="btn ghost small" data-stop>Stop</button>
+      <span class="find" id="sd-pic"></span>
+      <div class="dots" id="sd-dots" aria-label="Differences found"></div>
+    </div>
+    <div class="sd-wrap"><div class="scene" id="sd-a"></div><div class="scene" id="sd-b"></div></div>
+    <p class="wait" id="sd-msg" aria-live="polite"></p>
+  </div>
+
+  <!-- RESULTS -->
+  <div class="screen" id="results" hidden>
+    <div class="stars" id="res-stars"></div>
+    <h2 id="res-title"></h2>
+    <ul id="res-lines"></ul>
+    <div class="row">
+      <button class="btn" id="res-again">Play again</button>
+      <button class="btn ghost" id="res-home">Home</button>
+    </div>
+  </div>
+
+  <!-- GROWN-UPS -->
+  <div class="screen" id="grown" hidden>
+    <div class="hud">
+      <h2>Grown-ups</h2>
+      <button class="btn ghost small" id="grown-back">Done</button>
+    </div>
+    <section>
+      <h3>Players</h3>
+      <div class="fields">
+        <div class="field"><label for="name0">Player 1</label><input type="text" id="name0" maxlength="16"></div>
+        <div class="field"><label for="name1">Player 2</label><input type="text" id="name1" maxlength="16"></div>
+      </div>
+    </section>
+    <section>
+      <h3>Settings</h3>
+      <div class="field">
+        <label for="round">Firefly Watch round length</label>
+        <select id="round"><option value="45">45 seconds</option><option value="60">60 seconds</option><option value="90">90 seconds</option></select>
+      </div>
+      <label class="check"><input type="checkbox" id="voice"> Read instructions out loud</label>
+      <label class="check"><input type="checkbox" id="sound"> Sounds</label>
+      <p class="tip">Two or three games a day is plenty at age six. Each game adjusts its level after every round: it gets harder after a strong round and easier after a tough one. Play side by side and take turns; switch players on the home screen.</p>
+    </section>
+    <section>
+      <h3>Levels</h3>
+      <div class="tablewrap"><table id="levels"></table></div>
+    </section>
+    <section>
+      <h3>Recent rounds</h3>
+      <div class="tablewrap"><table id="history"></table></div>
+      <div><button class="btn ghost small" id="clear">Clear history</button></div>
+    </section>
+  </div>
+</main>
+
+<script>
+(() => {
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const shuffle = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+
+/* ---------- Saved state (this browser only) ---------- */
+const KEY = 'firefly-focus-v1';
+const DEFAULTS = { players: ['Kiddo', 'Grown-up'], current: 0, voice: true, sound: true, roundSec: 60, levels: {}, best: {}, history: [] };
+let S;
+try { S = { ...structuredClone(DEFAULTS), ...(JSON.parse(localStorage.getItem(KEY)) || {}) }; }
+catch { S = structuredClone(DEFAULTS); }
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch {} };
+const MAX_LEVEL = { firefly: 5, number: 3, reveal: 3, spot: 4 };
+const lvKey = g => S.current + ':' + g;
+const getLevel = g => S.levels[lvKey(g)] || 1;
+const setLevel = (g, v) => { S.levels[lvKey(g)] = Math.max(1, Math.min(MAX_LEVEL[g], v)); };
+
+/* ---------- Sound, voice, screen ---------- */
+let ac;
+function tone(freq, dur = .25, type = 'sine', vol = .18, delay = 0) {
+  if (!S.sound) return;
+  try {
+    ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+    if (ac.state === 'suspended') ac.resume();
+    const t = ac.currentTime + delay, o = ac.createOscillator(), g = ac.createGain();
+    o.type = type; o.frequency.value = freq;
+    g.gain.setValueAtTime(.0001, t);
+    g.gain.exponentialRampToValueAtTime(vol, t + .02);
+    g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+    o.connect(g).connect(ac.destination); o.start(t); o.stop(t + dur + .05);
+  } catch {}
+}
+const NOTES = [523.25, 587.33, 659.25, 783.99, 880, 1046.5];
+const good = i => tone(NOTES[i % NOTES.length]);
+const soft = () => tone(196, .3, 'triangle', .1);
+const fanfare = () => [0, 2, 3, 5].forEach((n, i) => tone(NOTES[n], .35, 'sine', .16, i * .14));
+function speak(text) {
+  if (!S.voice || !('speechSynthesis' in window)) return;
+  try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.rate = .92; u.pitch = 1.1; u.lang = 'en-US'; speechSynthesis.speak(u); } catch {}
+}
+let wakeLock = null;
+async function wake(on) {
+  try { if (on) wakeLock = await navigator.wakeLock?.request('screen'); else { await wakeLock?.release(); wakeLock = null; } } catch {}
+}
+
+/* ---------- Timers for the running game ---------- */
+let timers = [];
+const later = (fn, ms) => { const id = setTimeout(fn, ms); timers.push(id); return id; };
+const clearTimers = () => { timers.forEach(clearTimeout); timers = []; };
+
+/* ---------- Screens ---------- */
+function show(id) { $$('.screen').forEach(s => s.hidden = s.id !== id); }
+function renderHome() {
+  [0, 1].forEach(i => { const b = $('#p' + i); b.textContent = S.players[i]; b.setAttribute('aria-pressed', String(S.current === i)); });
+  $$('[data-level]').forEach(el => el.textContent = 'Level ' + getLevel(el.dataset.level) + ' of ' + MAX_LEVEL[el.dataset.level]);
+  const today = new Date().toDateString();
+  const n = S.history.filter(h => new Date(h.d).toDateString() === today && h.p === S.players[S.current]).length;
+  $('#today').textContent = n ? `${S.players[S.current]} played ${n} ${n === 1 ? 'round' : 'rounds'} today.` : `No rounds yet today for ${S.players[S.current]}.`;
+  show('home');
+}
+[0, 1].forEach(i => $('#p' + i).addEventListener('click', () => { S.current = i; save(); renderHome(); }));
+
+/* ---------- Stars background ---------- */
+(() => { const box = $('#stars'); for (let i = 0; i < 46; i++) { const s = document.createElement('i'); s.style.left = Math.random() * 100 + '%'; s.style.top = Math.random() * 100 + '%'; s.style.opacity = (.15 + Math.random() * .35).toFixed(2); box.append(s); } })();
+
+/* ---------- Game registry ---------- */
+const GAMES = {
+  firefly: {
+    title: 'Firefly Watch',
+    text: 'Tap only the golden fireflies. Let the green ones fly away.',
+    say: 'Firefly Watch. Tap only the golden fireflies. Let the green ones fly away. Keep watching, they can come at any time!',
+    art: () => $('.art-ff').outerHTML, start: startFirefly },
+  number: {
+    title: 'Number Path',
+    text: 'Find the numbers in order. Start with 1, then 2, then 3.',
+    say: 'Number Path. Find the numbers in order. Start with one, then two, then three. Take your time.',
+    art: () => $('.art-np').outerHTML, start: startNumber },
+  reveal: {
+    title: 'Slow Reveal',
+    text: 'Watch closely. When you are sure what the picture is, tap it below.',
+    say: 'Slow Reveal. Watch the picture appear, bit by bit. When you are sure what it is, tap the answer.',
+    art: () => $('.art-rv').outerHTML, start: startReveal },
+  spot: {
+    title: 'Spot the Difference',
+    text: 'The two pictures look the same, but some things are different. Tap each difference.',
+    say: 'Spot the Difference. The two pictures look the same, but some things are different. Look carefully, and tap each difference you find.',
+    art: () => $('.art-sd').outerHTML, start: startSpot },
+};
+let currentGame = null;
+
+function openIntro(game) {
+  currentGame = game;
+  const g = GAMES[game];
+  $('#intro-art').innerHTML = g.art();
+  $('#intro-title').textContent = g.title;
+  $('#intro-text').textContent = g.text;
+  $('#intro-btns').hidden = false; $('#count').hidden = true;
+  show('intro');
+  speak(g.say);
+}
+$$('.card').forEach(c => c.addEventListener('click', () => openIntro(c.dataset.game)));
+$('#intro-back').addEventListener('click', () => { try { speechSynthesis.cancel(); } catch {} renderHome(); });
+$('#intro-start').addEventListener('click', () => {
+  try { speechSynthesis.cancel(); } catch {}
+  $('#intro-btns').hidden = true;
+  const c = $('#count'); c.hidden = false;
+  let n = 3;
+  const tick = () => {
+    if (n === 0) { show('g-' + currentGame); wake(true); GAMES[currentGame].start(); return; }
+    c.textContent = n; tone(392, .15, 'sine', .1); n--; later(tick, 800);
+  };
+  tick();
+});
+$$('[data-stop]').forEach(b => b.addEventListener('click', () => { clearTimers(); wake(false); try { speechSynthesis.cancel(); } catch {} renderHome(); }));
+
+function finish({ stars, title, lines, levelDelta, summary }) {
+  clearTimers(); wake(false);
+  const before = getLevel(currentGame);
+  setLevel(currentGame, before + levelDelta);
+  const after = getLevel(currentGame);
+  S.history.unshift({ g: currentGame, p: S.players[S.current], d: Date.now(), stars, s: summary, lv: before });
+  S.history = S.history.slice(0, 60);
+  save();
+  const star = on => `<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="${on ? 'var(--gold)' : 'var(--panel)'}" d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5L2.5 9.4l6.6-.9z"/></svg>`;
+  $('#res-stars').innerHTML = [1, 2, 3].map(i => star(i <= stars)).join('');
+  $('#res-stars').setAttribute('aria-label', stars + ' of 3 stars');
+  $('#res-title').textContent = title;
+  const note = after > before ? 'Next time it will be a little harder. Level ' + after + '!'
+    : after < before ? 'Next time it will be a little easier.' : '';
+  $('#res-lines').innerHTML = lines.map(l => `<li>${l}</li>`).join('') + (note ? `<li class="note">${note}</li>` : '');
+  show('results');
+  fanfare();
+  later(() => speak(title + ' ' + lines[0]), 700);
+}
+$('#res-again').addEventListener('click', () => openIntro(currentGame));
+$('#res-home').addEventListener('click', () => { clearTimers(); try { speechSynthesis.cancel(); } catch {} renderHome(); });
+const titleFor = stars => stars === 3 ? 'Super focus!' : stars === 2 ? 'Great watching!' : 'Good try!';
+
+/* ---------- Game 1: Firefly Watch ---------- */
+// visible ms, gap between spawns, how many fireflies may be on screen at once
+const FF = [null, { vis: 1900, gap: 950, max: 1 }, { vis: 1700, gap: 850, max: 1 }, { vis: 1500, gap: 750, max: 2 }, { vis: 1300, gap: 700, max: 2 }, { vis: 1150, gap: 620, max: 2 }];
+function startFirefly() {
+  const cfg = FF[getLevel('firefly')];
+  const arena = $('#ff-arena');
+  arena.querySelectorAll('.fly').forEach(n => n.remove());
+  const st = { shown: 0, caught: 0, oops: 0, live: 0, ended: false };
+  const dur = S.roundSec * 1000, t0 = performance.now();
+  $('#ff-caught').textContent = '0';
+  const bar = $('#ff-bar');
+  bar.style.transition = 'none'; bar.style.width = '100%';
+  requestAnimationFrame(() => requestAnimationFrame(() => { bar.style.transition = `width ${S.roundSec}s linear`; bar.style.width = '0%'; }));
+
+  function makeFly(gold) {
+    const r = arena.getBoundingClientRect(), pad = 50;
+    const b = document.createElement('button');
+    b.className = 'fly' + (gold ? ' gold' : '');
+    b.setAttribute('aria-label', gold ? 'Golden firefly' : 'Green firefly');
+    b.style.left = pad + Math.random() * Math.max(1, r.width - 2 * pad) + 'px';
+    b.style.top = pad + Math.random() * Math.max(1, r.height - 2 * pad - 50) + 'px';
+    b.style.setProperty('--life', cfg.vis + 'ms');
+    b.style.setProperty('--dx', (Math.random() * 60 - 30).toFixed(0) + 'px');
+    b.style.setProperty('--dy', (Math.random() * 40 - 30).toFixed(0) + 'px');
+    let done = false;
+    st.live++; if (gold) st.shown++;
+    b.addEventListener('pointerdown', e => {
+      e.preventDefault();
+      if (done || st.ended) return;
+      done = true; st.live--;
+      if (gold) { st.caught++; good(st.caught); b.classList.add('caught'); $('#ff-caught').textContent = st.caught; }
+      else { st.oops++; soft(); b.classList.add('oops'); }
+      later(() => b.remove(), 420);
+    });
+    arena.append(b);
+    later(() => { if (!done) { done = true; st.live--; b.remove(); } }, cfg.vis);
+  }
+  function spawn() {
+    if (st.ended) return;
+    const elapsed = performance.now() - t0, p = Math.min(1, elapsed / dur);
+    // Golden fireflies get rarer as the round goes on, so attention has to last.
+    if (st.live < cfg.max && dur - elapsed > cfg.vis + 200) makeFly(Math.random() < .42 - .26 * p);
+    later(spawn, cfg.gap + Math.random() * cfg.gap);
+  }
+  later(spawn, 700);
+  later(() => {
+    st.ended = true;
+    arena.querySelectorAll('.fly').forEach(n => n.remove());
+    const score = st.shown ? Math.max(0, st.caught - .5 * st.oops) / st.shown : 0;
+    const stars = score >= .85 ? 3 : score >= .6 ? 2 : 1;
+    finish({
+      stars, title: titleFor(stars),
+      lines: [
+        `You caught ${st.caught} of ${st.shown} golden fireflies.`,
+        st.oops ? `${st.oops} green ${st.oops === 1 ? 'one was' : 'ones were'} tapped by mistake.` : 'No green fireflies tapped. Nice waiting!',
+      ],
+      levelDelta: score >= .85 ? 1 : score < .6 ? -1 : 0,
+      summary: `${st.caught}/${st.shown} caught, ${st.oops} green`,
+    });
+  }, dur);
+}
+
+/* ---------- Game 2: Number Path ---------- */
+const NP = [null, { c: 3, r: 3 }, { c: 4, r: 3 }, { c: 4, r: 4 }];
+const NP_BOARDS = 3;
+function startNumber() {
+  const lv = getLevel('number'), { c, r } = NP[lv], n = c * r;
+  const st = { board: 1, next: 1, mistakes: 0, hints: 0, t0: performance.now(), idle: 0 };
+  const grid = $('#np-grid');
+  grid.style.gridTemplateColumns = `repeat(${c}, 1fr)`;
+  grid.style.width = c === 3 ? 'min(100%, 52vh, 440px)' : 'min(100%, 58vh, 540px)';
+
+  const dots = () => $('#np-dots').innerHTML = Array.from({ length: NP_BOARDS }, (_, i) => `<i class="${i < st.board - 1 ? 'on' : ''}"></i>`).join('');
+  function armHint() {
+    clearTimeout(st.idle);
+    st.idle = later(() => { const cell = grid.querySelector(`[data-n="${st.next}"]`); if (cell) { cell.classList.add('hint'); st.hints++; } }, 9000);
+  }
+  function build() {
+    st.next = 1; $('#np-next').textContent = '1'; dots();
+    grid.innerHTML = '';
+    shuffle(Array.from({ length: n }, (_, i) => i + 1)).forEach(num => {
+      const b = document.createElement('button');
+      b.className = 'cell'; b.textContent = num; b.dataset.n = num;
+      b.addEventListener('pointerdown', e => {
+        e.preventDefault();
+        if (b.classList.contains('done')) return;
+        if (num === st.next) {
+          b.classList.remove('hint'); b.classList.add('done'); good(num - 1);
+          st.next++;
+          if (st.next > n) {
+            clearTimeout(st.idle);
+            if (st.board < NP_BOARDS) { st.board++; dots(); later(build, 700); }
+            else { dots(); $('#np-dots').lastElementChild.classList.add('on'); later(end, 500); }
+          } else { $('#np-next').textContent = st.next; armHint(); }
+        } else {
+          st.mistakes++; soft();
+          b.classList.remove('shake'); void b.offsetWidth; b.classList.add('shake');
+        }
+      });
+      grid.append(b);
+    });
+    armHint();
+  }
+  function end() {
+    const secs = Math.round((performance.now() - st.t0) / 1000);
+    const bestKey = lvKey('number') + ':' + lv;
+    const prev = S.best[bestKey];
+    const isBest = !prev || secs < prev;
+    if (isBest) S.best[bestKey] = secs;
+    const stars = st.mistakes <= 1 && st.hints === 0 ? 3 : st.mistakes <= 4 ? 2 : 1;
+    finish({
+      stars, title: titleFor(stars),
+      lines: [
+        `You finished ${NP_BOARDS} boards in ${secs} seconds.`,
+        st.mistakes ? `${st.mistakes} wrong ${st.mistakes === 1 ? 'tap' : 'taps'}${st.hints ? `, ${st.hints} ${st.hints === 1 ? 'hint' : 'hints'}` : ''}.` : `No wrong taps${st.hints ? `, ${st.hints} ${st.hints === 1 ? 'hint' : 'hints'}` : ''}!`,
+        isBest && prev ? `New best time! (was ${prev} seconds)` : prev ? `Best time: ${prev} seconds.` : '',
+      ].filter(Boolean),
+      levelDelta: st.mistakes <= 1 && st.hints <= 1 ? 1 : st.mistakes >= 6 ? -1 : 0,
+      summary: `${n} numbers × ${NP_BOARDS}, ${secs}s, ${st.mistakes} wrong, ${st.hints} hints`,
+    });
+  }
+  build();
+}
+
+/* ---------- Game 3: Slow Reveal ---------- */
+const PICS = [
+  ['🐶', 'dog'], ['🐱', 'cat'], ['🚗', 'car'], ['🍎', 'apple'], ['🚀', 'rocket'], ['🐘', 'elephant'],
+  ['🌻', 'flower'], ['🦒', 'giraffe'], ['🚂', 'train'], ['🐢', 'turtle'], ['🍌', 'banana'], ['🦁', 'lion'],
+  ['🐟', 'fish'], ['🏠', 'house'], ['⚽', 'ball'], ['🦋', 'butterfly'], ['🐸', 'frog'], ['🚲', 'bike'],
+];
+const RV = [null, { g: 5, opts: 3 }, { g: 6, opts: 3 }, { g: 6, opts: 4 }];
+const RV_ROUND = 5, RV_EVERY = 650, RV_UNLOCK = 4, RV_LOCK_MS = 3000;
+function startReveal() {
+  const cfg = RV[getLevel('reveal')];
+  const st = { i: 0, firstTry: 0, wrong: 0, pics: shuffle(PICS).slice(0, RV_ROUND) };
+  const covers = $('#rv-covers'), choices = $('#rv-choices'), wait = $('#rv-wait');
+  covers.style.gridTemplateColumns = `repeat(${cfg.g}, 1fr)`;
+
+  function next() {
+    const [emoji, name] = st.pics[st.i];
+    let wrongHere = 0, solved = false, opened = 0;
+    $('#rv-dots').innerHTML = Array.from({ length: RV_ROUND }, (_, k) => `<i class="${k < st.i ? 'on' : ''}"></i>`).join('');
+    $('#rv-pic').textContent = emoji;
+    covers.innerHTML = '<i></i>'.repeat(cfg.g * cfg.g);
+    const tiles = shuffle([...covers.children]);
+    const opts = shuffle([[emoji, name], ...shuffle(PICS.filter(p => p[0] !== emoji)).slice(0, cfg.opts - 1)]);
+    choices.innerHTML = '';
+    wait.textContent = 'Watch closely…';
+    const btns = opts.map(([e, n]) => {
+      const b = document.createElement('button');
+      b.className = 'choice'; b.disabled = true;
+      b.innerHTML = `<span class="e" aria-hidden="true">${e}</span><span class="n">${n}</span>`;
+      b.addEventListener('click', () => pick(b, e === emoji));
+      choices.append(b);
+      return b;
+    });
+    const setEnabled = on => btns.forEach(b => { if (!b.classList.contains('no')) b.disabled = !on; });
+    function reveal() {
+      if (solved || opened >= tiles.length) return;
+      tiles[opened++].classList.add('off');
+      if (opened === RV_UNLOCK) { setEnabled(true); wait.textContent = 'Tap the answer when you are sure.'; }
+      later(reveal, RV_EVERY);
+    }
+    function pick(b, right) {
+      if (solved) return;
+      if (right) {
+        solved = true; if (!wrongHere) st.firstTry++;
+        b.classList.add('yes'); setEnabled(false);
+        tiles.forEach(t => t.classList.add('off'));
+        fanfare(); speak('A ' + name + '!');
+        wait.textContent = wrongHere ? 'You found it!' : 'Got it on the first try!';
+        st.i++;
+        later(st.i < RV_ROUND ? next : end, 1900);
+      } else {
+        wrongHere++; st.wrong++; soft();
+        b.classList.add('no'); b.disabled = true;
+        // Pause guessing for a moment so careful looking beats fast tapping.
+        setEnabled(false); wait.textContent = 'Not that one. Look closer…';
+        later(() => { if (!solved) { setEnabled(true); wait.textContent = 'Tap the answer when you are sure.'; } }, RV_LOCK_MS);
+      }
+    }
+    later(reveal, 900);
+  }
+  function end() {
+    const stars = st.firstTry === RV_ROUND ? 3 : st.firstTry >= 3 ? 2 : 1;
+    finish({
+      stars, title: titleFor(stars),
+      lines: [
+        `You got ${st.firstTry} of ${RV_ROUND} pictures on the first try.`,
+        st.wrong ? `${st.wrong} wrong ${st.wrong === 1 ? 'guess' : 'guesses'}.` : 'No wrong guesses at all!',
+      ],
+      levelDelta: st.firstTry === RV_ROUND ? 1 : st.wrong >= 4 ? -1 : 0,
+      summary: `${st.firstTry}/${RV_ROUND} first try, ${st.wrong} wrong`,
+    });
+  }
+  next();
+}
+
+/* ---------- Game 4: Spot the Difference ---------- */
+const SD_THEMES = [
+  { cls: 'garden', items: ['🌻', '🌷', '🍄', '🐝', '🐞', '🦋', '🐌', '🐛', '🍎', '🐦', '🐸', '🌳'] },
+  { cls: 'ocean', items: ['🐟', '🐠', '🐡', '🐙', '🦀', '🐚', '🐳', '🐬', '🦑', '🐢', '⭐', '🦈'] },
+  { cls: 'town', items: ['🚗', '🚌', '🚲', '🚂', '🏠', '🌳', '🚦', '🐕', '🎈', '🚒', '🚜', '🛴'] },
+  { cls: 'space', items: ['🚀', '🌙', '⭐', '🪐', '👽', '🛸', '🌍', '🌟', '🔭', '☄️'] },
+];
+// Only objects that face one way look different when flipped.
+const SD_FLIPPABLE = ['🐌', '🐛', '🐦', '🐟', '🐠', '🐡', '🐳', '🐬', '🐢', '🦈', '🚗', '🚌', '🚲', '🚂', '🐕', '🚒', '🚜', '🛴', '🚀', '🔭', '☄️'];
+// Pale objects barely change when recolored.
+const SD_PALE = ['🐚', '🔭', '☄️', '🛸'];
+const SD = [null,
+  { c: 3, r: 3, diffs: 3, types: ['missing', 'swap'] },
+  { c: 4, r: 3, diffs: 3, types: ['missing', 'swap', 'color'] },
+  { c: 4, r: 3, diffs: 4, types: ['missing', 'swap', 'color', 'size'] },
+  { c: 4, r: 4, diffs: 5, types: ['missing', 'swap', 'color', 'size', 'flip'] },
+];
+const SD_PICTURES = 3, SD_HINT_MS = 20000, SD_LOCK_AFTER = 3, SD_LOCK_MS = 3000;
+const SD_MSG = 'Tap a difference on either picture.';
+function startSpot() {
+  const cfg = SD[getLevel('spot')];
+  const st = { pic: 0, wrong: 0, hints: 0, idle: 0, cur: null };
+  const scenes = [$('#sd-a'), $('#sd-b')], msg = $('#sd-msg');
+  const rand = (a, b) => a + Math.random() * (b - a);
+  const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+  const bothSlots = i => scenes.map(sc => sc.querySelector(`.slot[data-i="${i}"]`));
+  const dots = () => $('#sd-dots').innerHTML = st.cur.diffs.map((_, k) => `<i class="${k < st.cur.found.size ? 'on' : ''}"></i>`).join('');
+
+  function armHint() {
+    clearTimeout(st.idle);
+    st.idle = later(() => {
+      const i = st.cur.diffs.find(k => !st.cur.found.has(k));
+      if (i === undefined) return;
+      bothSlots(i).forEach(s => s.classList.add('hint'));
+      st.hints++;
+    }, SD_HINT_MS);
+  }
+  function build() {
+    const theme = pick(SD_THEMES), cells = cfg.c * cfg.r;
+    // Leave a few cells empty so the scene has room to breathe.
+    const used = shuffle([...Array(cells).keys()]).slice(0, cells - Math.floor(cells / 6));
+    const slots = used.map(cell => ({ cell, e: pick(theme.items), jx: rand(-.1, .1), jy: rand(-.1, .1) }));
+    const diffs = shuffle(slots.map((_, i) => i)).slice(0, cfg.diffs);
+    diffs.forEach(i => {
+      const s = slots[i];
+      let type = pick(cfg.types);
+      if (type === 'flip' && !SD_FLIPPABLE.includes(s.e)) type = 'swap';
+      if (type === 'color' && SD_PALE.includes(s.e)) type = 'swap';
+      s.diff = type;
+      s.side = Math.random() < .5 ? 0 : 1; // which picture holds the change
+      if (type === 'swap') s.e2 = pick(theme.items.filter(x => x !== s.e));
+    });
+    st.cur = { slots, diffs, found: new Set(), misses: 0, done: false };
+    st.pic++;
+    $('#sd-pic').textContent = `Picture ${st.pic} of ${SD_PICTURES}`;
+    msg.textContent = SD_MSG;
+    dots();
+    scenes.forEach((sc, side) => {
+      sc.className = 'scene ' + theme.cls;
+      sc.style.setProperty('--cols', cfg.c); sc.style.setProperty('--rows', cfg.r);
+      sc.innerHTML = '';
+      slots.forEach((s, i) => {
+        const b = document.createElement('button');
+        b.className = 'slot'; b.dataset.i = i; b.tabIndex = -1;
+        b.style.left = (s.cell % cfg.c + s.jx) / cfg.c * 100 + '%';
+        b.style.top = (Math.floor(s.cell / cfg.c) + s.jy) / cfg.r * 100 + '%';
+        const e = document.createElement('span');
+        e.className = 'e'; e.textContent = s.e;
+        if (s.diff && s.side === side) {
+          if (s.diff === 'missing') e.textContent = '';
+          if (s.diff === 'swap') e.textContent = s.e2;
+          if (s.diff === 'color') e.style.filter = 'hue-rotate(170deg) saturate(1.4)';
+          if (s.diff === 'size') e.style.transform = 'scale(.55)';
+          if (s.diff === 'flip') e.style.transform = 'scaleX(-1)';
+        }
+        b.append(e); sc.append(b);
+      });
+    });
+    armHint();
+  }
+  function tap(ev, sc) {
+    ev.preventDefault();
+    const cur = st.cur;
+    if (!cur || cur.done) return;
+    const slot = ev.target.closest('.slot');
+    const i = slot ? +slot.dataset.i : -1;
+    if (cur.found.has(i)) return;
+    if (i >= 0 && cur.slots[i].diff) {
+      cur.found.add(i); cur.misses = 0;
+      bothSlots(i).forEach(s => { s.classList.remove('hint'); s.classList.add('found'); });
+      good(cur.found.size); dots();
+      if (cur.found.size === cur.diffs.length) {
+        cur.done = true; clearTimeout(st.idle);
+        msg.textContent = 'You found them all!';
+        later(st.pic < SD_PICTURES ? build : end, 1500);
+      } else armHint();
+      return;
+    }
+    st.wrong++; cur.misses++; soft();
+    const r = sc.getBoundingClientRect(), m = document.createElement('span');
+    m.className = 'miss'; m.style.left = ev.clientX - r.left + 'px'; m.style.top = ev.clientY - r.top + 'px';
+    sc.append(m); later(() => m.remove(), 700);
+    // Several misses in a row pause tapping, so careful looking beats guessing.
+    if (cur.misses >= SD_LOCK_AFTER) {
+      cur.misses = 0;
+      scenes.forEach(s => s.classList.add('locked'));
+      msg.textContent = 'Stop and look carefully at both pictures…';
+      later(() => { scenes.forEach(s => s.classList.remove('locked')); if (!cur.done) msg.textContent = SD_MSG; }, SD_LOCK_MS);
+    }
+  }
+  scenes.forEach(sc => { sc.classList.remove('locked'); sc.onpointerdown = ev => tap(ev, sc); });
+  function end() {
+    const total = SD_PICTURES * cfg.diffs;
+    const stars = st.wrong <= 2 && st.hints === 0 ? 3 : st.wrong <= 6 && st.hints <= 1 ? 2 : 1;
+    finish({
+      stars, title: titleFor(stars),
+      lines: [
+        `You found all ${total} differences in ${SD_PICTURES} pictures.`,
+        (st.wrong ? `${st.wrong} ${st.wrong === 1 ? 'tap' : 'taps'} on the wrong spot` : 'No wrong taps') +
+          (st.hints ? `, ${st.hints} ${st.hints === 1 ? 'hint' : 'hints'}.` : st.wrong ? '.' : '!'),
+      ],
+      levelDelta: st.wrong <= 2 && st.hints === 0 ? 1 : st.hints >= 2 || st.wrong >= 10 ? -1 : 0,
+      summary: `${total} found, ${st.wrong} wrong, ${st.hints} hints`,
+    });
+  }
+  build();
+}
+
+/* ---------- Grown-ups ---------- */
+const GAME_NAMES = { firefly: 'Firefly Watch', number: 'Number Path', reveal: 'Slow Reveal', spot: 'Spot the Difference' };
+function renderGrown() {
+  $('#name0').value = S.players[0]; $('#name1').value = S.players[1];
+  $('#round').value = String(S.roundSec);
+  $('#voice').checked = S.voice; $('#sound').checked = S.sound;
+  $('#levels').innerHTML = '<tr><th>Player</th>' + Object.values(GAME_NAMES).map(n => `<th>${n}</th>`).join('') + '</tr>' +
+    [0, 1].map(i => `<tr><td>${esc(S.players[i])}</td>` + Object.keys(GAME_NAMES).map(g => `<td>${S.levels[i + ':' + g] || 1} of ${MAX_LEVEL[g]}</td>`).join('') + '</tr>').join('');
+  $('#history').innerHTML = S.history.length
+    ? '<tr><th>When</th><th>Player</th><th>Game</th><th>Level</th><th>Stars</th><th>Result</th></tr>' +
+      S.history.slice(0, 20).map(h => `<tr><td>${new Date(h.d).toLocaleString([], { weekday: 'short', hour: '2-digit', minute: '2-digit' })}</td><td>${esc(h.p)}</td><td>${GAME_NAMES[h.g]}</td><td>${h.lv}</td><td>${'★'.repeat(h.stars)}</td><td>${h.s}</td></tr>`).join('')
+    : '<tr><td>No rounds played yet. Results show up here after each game.</td></tr>';
+  show('grown');
+}
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+$('#open-grown').addEventListener('click', renderGrown);
+$('#grown-back').addEventListener('click', renderHome);
+['name0', 'name1'].forEach((id, i) => $('#' + id).addEventListener('input', e => { S.players[i] = e.target.value.trim() || DEFAULTS.players[i]; save(); }));
+$('#round').addEventListener('change', e => { S.roundSec = +e.target.value; save(); });
+$('#voice').addEventListener('change', e => { S.voice = e.target.checked; save(); });
+$('#sound').addEventListener('change', e => { S.sound = e.target.checked; save(); });
+let clearArmed = 0;
+$('#clear').addEventListener('click', e => {
+  if (!clearArmed) { e.target.textContent = 'Tap again to clear'; clearArmed = setTimeout(() => { clearArmed = 0; e.target.textContent = 'Clear history'; }, 3000); return; }
+  clearTimeout(clearArmed); clearArmed = 0;
+  S.history = []; S.best = {}; save(); e.target.textContent = 'Cleared'; renderGrown();
+  setTimeout(() => e.target.textContent = 'Clear history', 1500);
+});
+
+renderHome();
+})();
+</script>

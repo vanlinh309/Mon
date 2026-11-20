@@ -1,0 +1,985 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Math Steps</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#fdf6e9; --card:#fff; --ink:#2b2d42; --muted:#7a7f8f; --line:#e9dfcd;
+  --blue:#3a86ff; --green:#2bb673; --red:#ef476f; --purple:#8338ec;
+  --cell:min(46px, 11vw);
+}
+*{box-sizing:border-box}
+[hidden]{display:none !important}
+html,body{overflow-x:hidden}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Fredoka,"Comic Sans MS",system-ui,sans-serif}
+main{max-width:980px;margin:0 auto;padding:12px}
+header{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+h1{font-size:22px;margin:0}
+.score{display:flex;align-items:center;gap:10px;font-size:18px;font-weight:600}
+.mini{border:0;border-radius:10px;background:var(--purple);color:#fff;font:inherit;font-size:14px;padding:5px 10px;cursor:pointer}
+.mini.gray{background:#8d94a5}
+.mini:disabled{opacity:.35;cursor:not-allowed}
+
+.tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+.tab{border:0;border-radius:12px;padding:8px 16px;font:inherit;font-size:17px;font-weight:600;background:var(--card);box-shadow:0 2px 0 var(--line);cursor:pointer;color:var(--ink)}
+.tab[aria-selected=true]{background:var(--ink);color:#fff}
+
+/* question list */
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+.toolbar>span{font-size:14px;color:var(--muted)}
+.toolbar .group{background:var(--card);box-shadow:0 2px 0 var(--line)}
+.toolbar .seg{font-size:15px;padding:5px 10px}
+.list{display:flex;flex-direction:column;gap:18px}
+.q{background:var(--card);border-radius:20px;padding:20px clamp(14px,3vw,28px);border:3px solid var(--line);box-shadow:0 4px 0 var(--line);display:flex;align-items:center;flex-wrap:wrap;gap:14px 24px;transition:background .3s,border-color .3s}
+.q:nth-child(even){background:#fffaf0}
+.q-top{display:flex;align-items:center;gap:14px;min-width:300px}
+.q-no{font-size:22px;color:#fff;font-weight:700;background:var(--ink);border-radius:12px;min-width:44px;text-align:center;padding:4px 10px}
+.q-expr{font-size:36px;font-weight:700}
+.q-ans{display:inline-block;min-width:1.3em;text-align:center;border:3px dashed #cfd6e4;border-radius:10px;color:var(--blue)}
+.q.ok{background:#eefaf3;border-color:var(--green)}
+.q.ok .q-ans{color:var(--green);border:3px solid var(--green)}
+.q.no{background:#fff0f3;border-color:var(--red)}
+.q.ok.flash{animation:okPop .6s}
+.q.no.flash{animation:noShake .5s}
+@keyframes okPop{0%{transform:scale(1)}40%{transform:scale(1.025)}100%{transform:scale(1)}}
+@keyframes noShake{0%,100%{transform:none}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+.q.err .q-expr{font-size:16px;color:var(--red);font-weight:400}
+.opts{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;flex:1 1 340px;max-width:440px}
+.opt{border:2px solid #dfe5f0;background:#f6f8fd;border-radius:12px;font:inherit;font-size:26px;font-weight:600;padding:12px 4px;cursor:pointer;color:var(--ink)}
+.q-expr.vs{font-weight:400}
+.side-l{color:#2459b8;background:#eaf1ff;border-radius:10px;padding:0 8px}
+.side-r{color:#a14a12;background:#fff0e3;border-radius:10px;padding:0 8px}
+.opts.three{grid-template-columns:repeat(3,1fr);flex:0 1 300px}
+.opts.three .opt{font-size:34px;padding:6px 4px}
+.opt b{color:var(--muted);font-weight:400;margin-right:4px}
+.opt:disabled{cursor:default}
+.opt.picked{background:var(--blue);border-color:var(--blue);color:#fff}
+.opt.picked b{color:#dfe8ff}
+.opt.right{background:#d8f3e6;border-color:var(--green);color:var(--green)}
+.opt.wrong{background:#fde3ea;border-color:var(--red);color:var(--red);opacity:.7}
+.q-foot{display:flex;align-items:center;gap:10px;margin-left:auto;min-width:230px;justify-content:flex-end;font-size:17px;min-height:36px}
+.q-foot .mini{font-size:16px;padding:7px 14px}
+.check-row{display:flex;justify-content:center;margin:16px 0 24px}
+.big-btn{border:0;border-radius:14px;background:var(--green);color:#fff;font:inherit;font-size:22px;font-weight:600;padding:12px 28px;cursor:pointer;box-shadow:0 3px 0 rgba(0,0,0,.15)}
+.big-btn:disabled{opacity:.5;cursor:not-allowed}
+
+/* tab 3: connect the numbers */
+.ex{background:var(--card);border-radius:22px;padding:22px clamp(14px,3vw,30px) 30px;border:3px solid var(--line);box-shadow:0 4px 0 var(--line)}
+.ex:nth-child(even){background:#fffaf0}
+.ex + .ex{margin-top:26px}
+.ex-title{font-size:17px;color:var(--muted);margin-bottom:22px;padding-bottom:14px;border-bottom:2px dashed var(--line)}
+.ex-badge{display:inline-block;background:var(--ink);color:#fff;font-size:22px;font-weight:700;border-radius:12px;padding:4px 14px;margin-right:10px}
+.ex-hint{color:var(--red);font-weight:600}
+.ex-body{position:relative;display:flex;flex-direction:column;gap:clamp(64px,10vw,110px)}
+svg.links{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible;z-index:1}
+.ex-rows{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px clamp(12px,4vw,40px)}
+.crow{border:3px solid var(--c);border-radius:14px;padding:10px 14px;text-align:center;background:#fff;cursor:pointer;touch-action:none;user-select:none;position:relative;z-index:2;transition:background .2s,box-shadow .2s}
+.crow.sel{background:color-mix(in srgb,var(--c) 14%,#fff);box-shadow:0 0 0 4px color-mix(in srgb,var(--c) 35%,transparent)}
+.crow.ok{background:#eefaf3;cursor:default}
+.crow.no{background:#fff0f3}
+.crow.ok.flash{animation:okPop .6s}
+.crow.no.flash{animation:noShake .5s}
+.crow.err{border-color:var(--red);color:var(--red);font-size:15px;cursor:default}
+.cexpr{display:block;font-size:30px;font-weight:700}
+.crow .q-ans{display:inline-block;min-width:1.4em;text-align:center;border:3px dashed var(--c);border-radius:10px;color:var(--c)}
+.crow .q-msg{display:block;font-size:15px}
+.ex-nums{display:flex;flex-wrap:wrap;justify-content:center;gap:clamp(8px,2.5vw,22px);position:relative;z-index:2}
+.num{width:56px;height:56px;border-radius:50%;border:3px solid #cfd6e4;background:#f6f8fd;font:inherit;font-size:26px;font-weight:700;cursor:pointer;color:var(--ink)}
+.num:hover{border-color:var(--ink)}
+
+/* animation popup */
+.overlay{position:fixed;inset:0;background:rgba(43,45,66,.45);display:grid;place-items:center;padding:12px;z-index:10}
+.panel{background:var(--card);border-radius:18px;padding:12px 14px;width:min(520px,100%);max-height:100%;overflow:auto;position:relative}
+.close{position:absolute;top:8px;right:8px;border:0;background:#f3ecdf;border-radius:50%;width:32px;height:32px;font-size:18px;cursor:pointer}
+.group{background:#f7f2e8;border-radius:10px;padding:3px;display:flex;gap:2px;align-items:center}
+.seg{border:0;background:transparent;font:inherit;font-size:13px;padding:4px 8px;border-radius:8px;cursor:pointer;color:var(--ink)}
+.seg[aria-pressed=true]{background:var(--blue);color:#fff}
+.expr{display:flex;justify-content:center;align-items:center;gap:4px;font-size:34px;font-weight:700;min-height:52px;flex-wrap:wrap}
+.tok{padding:0 8px;border-radius:10px;transition:background .3s,color .3s,transform .3s}
+.tok.op{color:var(--muted)}
+.tok.active{background:#fff1b8;color:var(--ink);transform:scale(1.08)}
+.tok.merged{background:#d8f3e6;color:var(--green)}
+.tok.merged.active{background:#fff1b8}
+.tok.answer{min-width:1.6em;text-align:center;border:3px dashed #cfd6e4;color:var(--blue)}
+.tok.answer.correct{border:3px solid var(--green);color:var(--green)}
+.pop{animation:pop .45s}
+@keyframes pop{0%{transform:scale(.3)}70%{transform:scale(1.2)}100%{transform:scale(1)}}
+.step-info{text-align:center;color:var(--muted);font-size:13px;min-height:16px}
+.caption{text-align:center;font-size:18px;min-height:48px;display:flex;align-items:center;justify-content:center}
+.work{position:relative;display:flex;flex-direction:column;align-items:center;gap:8px;min-height:96px;margin-bottom:8px;font-size:30px;font-weight:700}
+.line{display:flex;align-items:center;gap:2px;transition:opacity .5s}
+.line.done{opacity:.4}
+.work .tok{border:3px solid transparent}
+.work .tok.answer{border:3px dashed #cfd6e4}
+.work .tok.answer.correct,.tok.carry{border:3px solid var(--green)}
+.tok.carry{background:#d8f3e6;color:var(--green)}
+.tok.ghost{position:absolute;z-index:5;pointer-events:none}
+.fade-in{animation:fadeIn .4s ease-out}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
+.frame{display:grid;grid-template-columns:repeat(5,var(--cell));gap:6px;justify-content:center;padding:10px;border-radius:14px;margin:0 auto;width:max-content;max-width:100%}
+.frame.cars{background:#7d8597} .frame.animals{background:#8fd694} .frame.trains{background:#c9a77c}
+.cell{width:var(--cell);height:var(--cell);border-radius:9px;border:2px dashed rgba(255,255,255,.85);display:grid;place-items:center;transition:background .3s,border-color .3s}
+.cell.new{border:2px solid #fff;background:rgba(255,255,255,.45)}
+.cell.going{border:2px solid var(--red);background:rgba(239,71,111,.3)}
+.cell.going .obj{animation:shake .5s infinite}
+.cell.carry{border:2px solid var(--green);background:rgba(43,182,115,.35)}
+.cell.carry .obj{animation:bounce .5s ease-in-out 2}
+.obj{font-size:calc(var(--cell)*.66);line-height:1;display:inline-block}
+.obj .g{display:inline-block}
+.obj.flip .g{transform:scaleX(-1)}
+.obj.arrive{animation:arrive .45s ease-out}
+.obj.leave{animation:leave .5s ease-in forwards !important}
+@keyframes arrive{from{transform:translateX(-80vw);opacity:0}to{transform:none;opacity:1}}
+@keyframes leave{to{transform:translateX(80vw);opacity:0}}
+@keyframes shake{0%,100%{transform:rotate(0)}25%{transform:rotate(-8deg)}75%{transform:rotate(8deg)}}
+@keyframes bounce{50%{transform:translateY(-10px)}}
+.frame.party .obj{animation:bounce .6s ease-in-out 3}
+.count{text-align:center;font-size:18px;margin-top:6px}
+.count b{font-size:26px}
+.panel-actions{display:flex;justify-content:center;gap:8px;margin-top:10px}
+.panel-actions .mini{font-size:16px;padding:7px 14px}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Math Steps 🚗🐶</h1>
+    <div class="score">⭐ <span id="score">0 / 0</span>
+      <button class="mini gray" id="resetBtn">Start over 🔄</button>
+    </div>
+  </header>
+  <div class="tabs">
+    <button class="tab" data-tab="solve" aria-selected="true">1️⃣ Solve it</button>
+    <button class="tab" data-tab="missing" aria-selected="false">2️⃣ Find the missing number</button>
+    <button class="tab" data-tab="connect" aria-selected="false">3️⃣ Connect the numbers</button>
+    <button class="tab" data-tab="compare" aria-selected="false">4️⃣ Compare &gt; &lt; =</button>
+  </div>
+  <div class="toolbar">
+    <span>Explain with</span>
+    <div class="group" data-setting="display">
+      <button class="seg" data-val="basic" aria-pressed="true">🔢 Numbers</button>
+      <button class="seg" data-val="visual" aria-pressed="false">🎨 Pictures</button>
+    </div>
+    <div class="group" data-setting="theme" id="themeGroup" hidden>
+      <button class="seg" data-val="cars" aria-pressed="true">🚗 Cars</button>
+      <button class="seg" data-val="trains" aria-pressed="false">🚃 Trains</button>
+      <button class="seg" data-val="animals" aria-pressed="false">🐶 Animals</button>
+    </div>
+    <div class="group" data-setting="anim">
+      <button class="seg" data-val="auto" aria-pressed="true">▶ Automatic</button>
+      <button class="seg" data-val="step" aria-pressed="false">👣 Step-by-step</button>
+    </div>
+  </div>
+  <div class="list" id="list"></div>
+  <div class="check-row"><button class="big-btn" id="checkAllBtn">Check answers ✔</button></div>
+</main>
+
+<div class="overlay" id="overlay" hidden>
+  <div class="panel" role="dialog" aria-label="Explain">
+    <button class="close" id="closeBtn" aria-label="Close">✕</button>
+    <div class="expr" id="expr" style="margin-top:28px"></div>
+    <div class="step-info" id="stepInfo"></div>
+    <div class="caption" id="caption"></div>
+    <div class="work" id="work"></div>
+    <div id="visualView" hidden>
+      <div class="frame cars" id="frame"></div>
+      <div class="count">Count: <b id="count">0</b></div>
+    </div>
+    <div class="panel-actions">
+      <button class="mini" id="nextBtn" hidden>Next step ▶</button>
+      <button class="mini gray" id="replayBtn">Replay 🔁</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ======================================================================
+   ✏️  EDIT YOUR QUESTIONS HERE
+   Use numbers from 0 to 10 (answers and middle results too).
+   The 4 answer choices (exactly 1 correct) are made automatically.
+   ====================================================================== */
+
+// Tab 1 "Solve it": one expression per line, like "9 - 6 + 4".
+const SOLVE_QUESTIONS = [
+  "9 - 6 + 4",
+  "8 - 4 + 5",
+  "5 + 3 - 2",
+  "7 - 5 + 6",
+  "2 + 6 - 3",
+  "10 - 7 + 2",
+  "4 + 5 - 6",
+  "6 - 2 - 3",
+  "3 + 4 + 2",
+  "10 - 3 - 5",
+];
+
+// Tab 4 "Compare": two sides with "?" in the middle, like "9 - 2 + 3 ? 4 + 5 - 2".
+// The kid picks >, < or =.
+const COMPARE_QUESTIONS = [
+  "9 - 2 + 3 ? 4 + 5 - 2",
+  "5 + 3 - 4 ? 2 + 6 - 1",
+  "8 - 5 + 4 ? 10 - 6 + 3",
+  "6 + 4 - 7 ? 9 - 3 - 4",
+  "2 + 2 + 3 ? 10 - 1 - 1",
+  "10 - 4 - 2 ? 1 + 5 - 2",
+  "7 + 3 - 1 ? 8 - 6 + 5",
+  "4 - 3 + 6 ? 3 + 3 + 3",
+  "9 - 7 + 3 ? 2 + 6 - 3",
+  "3 + 5 - 2 ? 10 - 8 + 2",
+];
+
+// Tab 2 "Find the missing number": 3 numbers on the left,
+// and on the right "? + 2", "2 + ?", "8 - ?" or "? - 3".
+const MISSING_QUESTIONS = [
+  "9 - 4 + 3 = ? + 2",
+  "5 + 4 - 2 = 2 + ?",
+  "8 - 3 + 4 = 10 - ?",
+  "6 + 3 - 5 = ? - 3",
+  "10 - 6 + 2 = ? + 4",
+  "3 + 5 - 4 = 9 - ?",
+  "7 - 2 + 4 = 3 + ?",
+  "9 - 5 - 2 = ? - 4",
+  "4 + 4 + 1 = ? + 5",
+  "10 - 8 + 5 = 8 - ?",
+];
+
+// Tab 3 "Connect the numbers": each exercise has a list of numbers and some
+// problems like "8 + 2 - 3 > ? > 8 - 4 - 2" (or with <). The kid draws a line
+// from each problem to every number that fits. Each problem gets its own color.
+const CONNECT_EXERCISES = [
+  {
+    numbers: [2, 5, 4, 7, 9, 6, 8],
+    expressions: [
+      "8 + 2 - 3 > ? > 8 - 4 - 2",
+      "6 + 4 - 1 > ? > 9 - 5 + 2",
+      "4 + 3 + 3 > ? > 10 - 4 + 2",
+      "6 - 3 - 2 < ? < 1 + 1 + 2",
+    ],
+  },
+  {
+    numbers: [1, 3, 6, 8, 10, 4, 7],
+    expressions: [
+      "5 - 3 + 2 > ? > 9 - 6 - 3",
+      "2 + 7 - 1 > ? > 6 - 4 + 2",
+      "4 + 4 - 1 < ? < 5 + 3 + 2",
+      "3 + 2 - 2 < ? < 2 + 2 + 1",
+    ],
+  },
+  {
+    numbers: [0, 2, 5, 3, 9, 7, 6],
+    expressions: [
+      "10 - 4 + 2 > ? > 7 - 3 + 1",
+      "1 + 1 + 2 > ? > 5 - 3 - 2",
+      "8 - 2 + 1 < ? < 10 - 3 + 3",
+      "2 + 3 - 1 < ? < 10 - 5 + 1",
+    ],
+  },
+  {
+    numbers: [3, 8, 1, 6, 10, 5, 2],
+    expressions: [
+      "9 - 2 + 3 > ? > 2 + 5 - 1",
+      "7 - 4 + 1 > ? > 6 - 3 - 3",
+      "1 + 2 + 2 < ? < 4 + 4 - 1",
+      "6 - 4 + 2 < ? < 2 + 2 + 3",
+    ],
+  },
+  {
+    numbers: [4, 9, 0, 7, 2, 5, 10],
+    expressions: [
+      "3 + 4 - 4 > ? > 9 - 5 - 4",
+      "10 - 3 + 3 > ? > 5 + 4 - 1",
+      "8 - 6 + 1 < ? < 1 + 3 + 2",
+      "5 + 5 - 4 < ? < 3 + 3 + 4",
+    ],
+  },
+];
+/* ====================================================================== */
+
+const $ = s => document.querySelector(s);
+const MAX = 10;
+const MINUS = '−';
+const sym = o => o === '-' ? MINUS : '+';
+const calc = (x, op, y) => op === '+' ? x + y : x - y;
+const esc = s => s.replace(/[&<>"]/g, ch => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[ch]));
+const THEMES = {
+  cars:    { items:['🚗','🚕','🚙','🚓','🚌'], one:'car', many:'cars', inV:['drives in','drive in'], outV:['drives away','drive away'], flip:true },
+  trains:  { items:['🚃'], one:'train car', many:'train cars', inV:['rolls in','roll in'], outV:['rolls away','roll away'], flip:false },
+  animals: { items:['🐶','🐱','🐰','🐻','🐼','🦊','🐸','🐵'], one:'animal', many:'animals', inV:['comes to play','come to play'], outV:['runs home','run home'], flip:false },
+};
+
+/* ---------- questions & answer choices ---------- */
+// kind 1: "a op b op c = ?"      kind 2: "a op b op c = ? + k" (or k + ?, k - ?, ? - k)
+function parse(text, kind){
+  const hint = kind === 1 ? 'Write it like "9 - 6 + 4"' : 'Write it like "9 - 4 + 3 = ? + 2"';
+  const [lhs, rhs = ''] = text.replace(/−/g, '-').split('=');
+  const m = lhs.match(/^\s*(\d+)\s*([+-])\s*(\d+)\s*([+-])\s*(\d+)\s*$/);
+  if (!m) return { text, error:hint };
+  const a = +m[1], op1 = m[2], b = +m[3], op2 = m[4], c = +m[5];
+  const r1 = calc(a, op1, b), r2 = calc(r1, op2, c);
+  const q = { text, kind, a, op1, b, op2, c, r1, r2 };
+  const nums = [a, b, c, r1, r2];
+  if (kind === 1) {
+    q.answer = r2;
+  } else {
+    const r = rhs.match(/^\s*(\?|\d+)\s*([+-])\s*(\?|\d+)\s*$/);
+    if (!r || (r[1] === '?') === (r[3] === '?')) return { text, error:hint };
+    q.qFirst = r[1] === '?';
+    q.rop = r[2];
+    q.k = +(q.qFirst ? r[3] : r[1]);
+    q.right = q.qFirst ? ['?', q.rop, q.k] : [q.k, q.rop, '?'];
+    q.answer = q.rop === '+' ? r2 - q.k : q.qFirst ? r2 + q.k : q.k - r2;
+    nums.push(q.k, q.answer);
+  }
+  if (nums.some(v => v < 0 || v > MAX)) return { text, error:'Keep every number between 0 and 10' };
+  return q;
+}
+
+// Small seeded random so each question always gets the same choices.
+function seeded(str){
+  let h = 1779033703;
+  for (const ch of str) h = Math.imul(h ^ ch.charCodeAt(0), 3432918353);
+  return () => { h = Math.imul(h ^ (h >>> 15), 2246822507); h = Math.imul(h ^ (h >>> 13), 3266489909); return ((h ^= h >>> 16) >>> 0) / 4294967296; };
+}
+
+function makeChoices(p){
+  const flip = o => o === '+' ? '-' : '+';
+  const x = p.answer;
+  const mistakes = p.kind === 1 ? [
+    p.r1,                                              // stopped after the first step
+    calc(p.a, p.op1, calc(p.b, p.op2, p.c)),           // worked right to left
+    calc(calc(p.a, flip(p.op1), p.b), p.op2, p.c),     // mixed up the first sign
+    calc(p.r1, flip(p.op2), p.c),                      // mixed up the second sign
+  ] : [
+    p.r2,                                              // wrote the left side's total
+    p.k,                                               // copied the number on the right
+    p.rop === '+' ? p.r2 + p.k : p.qFirst ? p.r2 - p.k : p.k + p.r2, // used the wrong operation
+  ];
+  mistakes.push(x - 1, x + 1, x - 2, x + 2);           // close counting slips
+  const rnd = seeded(p.text);
+  const pool = [...new Set(mistakes)].filter(v => v >= 0 && v <= MAX && v !== x);
+  for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
+  const picks = pool.slice(0, 3);
+  for (let v = 0; picks.length < 3; v++) if (v !== x && !picks.includes(v)) picks.push(v);
+  return [...picks, x].sort((m, n) => m - n);
+}
+
+const TABS = {
+  solve:   { source:SOLVE_QUESTIONS,   kind:1, qs:[], stars:0 },
+  missing: { source:MISSING_QUESTIONS, kind:2, qs:[], stars:0 },
+  connect: { source:CONNECT_EXERCISES, kind:3, exs:[], stars:0 },
+  compare: { source:COMPARE_QUESTIONS, kind:4, qs:[], stars:0 },
+};
+
+// Tab 4: "9 - 2 + 3 ? 4 + 5 - 2" → answer ">", "<" or "=".
+function parseVs(text){
+  const parts = text.replace(/−/g, '-').split('?');
+  if (parts.length !== 2) return { text, error:'Write it like "9 - 2 + 3 ? 4 + 5 - 2"' };
+  const L = evalSide(parts[0]), R = evalSide(parts[1]);
+  if (!L || !R) return { text, error:'Keep every number between 0 and 10' };
+  return { text, kind:4, L, R, answer:L.v > R.v ? '>' : L.v < R.v ? '<' : '=' };
+}
+let tab = 'solve';
+const cur = () => TABS[tab];
+
+/* ---------- tab 3: connect the numbers ---------- */
+const COLORS = ['#3a86ff', '#fb8500', '#8338ec', '#ff4fa3', '#00a6a6', '#a1662f'];
+
+// "8 + 2 - 3" → { v:7, text:"8 + 2 − 3" }, worked left to right; null if invalid.
+function evalSide(s){
+  const t = s.trim();
+  if (!/^\d+(\s*[+-]\s*\d+)*$/.test(t)) return null;
+  const parts = t.match(/\d+|[+-]/g);
+  let v = +parts[0];
+  const vals = [v];
+  for (let i = 1; i < parts.length; i += 2) { v = calc(v, parts[i], +parts[i + 1]); vals.push(+parts[i + 1], v); }
+  if (vals.some(x => x < 0 || x > MAX)) return null;
+  return { v, text:parts.map(p => p === '-' ? MINUS : p).join(' ') };
+}
+
+function parseCompare(text, numbers){
+  const m = text.replace(/−/g, '-').match(/^(.*?)([<>])\s*\?\s*([<>])(.*)$/);
+  if (!m || m[2] !== m[3]) return { text, error:'Write it like "8 + 2 - 3 > ? > 8 - 4 - 2"' };
+  const L = evalSide(m[1]), R = evalSide(m[4]);
+  if (!L || !R) return { text, error:'Keep every number between 0 and 10' };
+  const [lo, hi] = m[2] === '>' ? [R.v, L.v] : [L.v, R.v];
+  return { text, sign:m[2], L, R, answer:numbers.filter(n => n > lo && n < hi) };
+}
+
+function loadQuestions(name = tab){
+  const t = TABS[name];
+  t.stars = 0;
+  if (t.kind === 3) {
+    t.exs = t.source.map(ex => {
+      const numbers = [...new Set(ex.numbers)];
+      return { numbers, sel:null, rows:ex.expressions.map((text, j) => Object.assign(parseCompare(text, numbers),
+        { color:COLORS[j % COLORS.length], links:new Set(), wrong:new Set(), checks:0, solved:false, status:'', msg:'' })) };
+    });
+    return;
+  }
+  t.qs = t.source.map(text => {
+    const q = t.kind === 4 ? parseVs(text) : parse(text, t.kind);
+    if (!q.error) Object.assign(q, { choices:t.kind === 4 ? ['>', '<', '='] : makeChoices(q), picked:null, checks:0, solved:false, watched:false });
+    return q;
+  });
+}
+
+const leftText = q => `${q.a} ${sym(q.op1)} ${q.b} ${sym(q.op2)} ${q.c}`;
+const rightHTML = q => q.kind === 1 ? '<span class="q-ans">?</span>'
+  : q.right.map(t => t === '?' ? '<span class="q-ans">?</span>' : typeof t === 'number' ? t : sym(t)).join(' ');
+
+function renderConnect(){
+  const gt = s => s === '>' ? '&gt;' : '&lt;';
+  const rowHTML = (ex, r, j) => r.error
+    ? `<div class="crow err">"${esc(r.text)}": ${r.error}</div>`
+    : `<div class="crow${r.status ? ' ' + r.status : ''}${ex.sel === j ? ' sel' : ''}" data-r="${j}" style="--c:${r.color}">
+         <span class="cexpr">${r.L.text} ${gt(r.sign)} <span class="q-ans">?</span> ${gt(r.sign)} ${r.R.text}</span>
+         <span class="q-msg">${r.msg}</span></div>`;
+  // First half of the problems above the numbers, the rest below.
+  $('#list').innerHTML = cur().exs.map((ex, e) => {
+    const half = Math.ceil(ex.rows.length / 2);
+    const rows = (from, to) => ex.rows.slice(from, to).map((r, k) => rowHTML(ex, r, from + k)).join('');
+    return `
+    <div class="ex" data-e="${e}">
+      <div class="ex-title"><span class="ex-badge">Exercise ${e + 1}</span>Draw a line from each problem to <b>every</b> number that fits.<span class="ex-hint"></span></div>
+      <div class="ex-body">
+        <svg class="links"></svg>
+        <div class="ex-rows ex-top">${rows(0, half)}</div>
+        <div class="ex-nums">${ex.numbers.map(n => `<button class="num" data-n="${n}">${n}</button>`).join('')}</div>
+        <div class="ex-rows ex-bot">${rows(half)}</div>
+      </div>
+    </div>`;
+  }).join('');
+  drawAll();
+  updateScore();
+}
+
+// Draw the lines of one exercise (plus the line being dragged, if any).
+function drawLinks(e, temp){
+  const exEl = document.querySelector(`.ex[data-e="${e}"]`); if (!exEl) return;
+  const ex = cur().exs[e], b = exEl.querySelector('.ex-body').getBoundingClientRect();
+  // Top problems connect from their bottom edge to the top of a number; bottom problems the other way.
+  const at = (el, edge) => { const r = el.getBoundingClientRect(); return [r.left + r.width / 2 - b.left, (edge === 'top' ? r.top : r.bottom) - b.top]; };
+  const rowAt = rowEl => at(rowEl, rowEl.closest('.ex-bot') ? 'top' : 'bottom');
+  let html = '';
+  ex.rows.forEach((r, j) => {
+    if (r.error) return;
+    const rowEl = exEl.querySelector(`.crow[data-r="${j}"]`);
+    const [x1, y1] = rowAt(rowEl);
+    r.links.forEach(n => {
+      const [x2, y2] = at(exEl.querySelector(`.num[data-n="${n}"]`), rowEl.closest('.ex-bot') ? 'bottom' : 'top');
+      const c = r.wrong.has(n) ? 'var(--red)' : r.color;
+      html += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="4" stroke-linecap="round"${r.wrong.has(n) ? ' stroke-dasharray="8 7"' : ''}/>` +
+              `<circle cx="${x1}" cy="${y1}" r="5" fill="${r.color}"/><circle cx="${x2}" cy="${y2}" r="5" fill="${c}"/>`;
+    });
+  });
+  if (temp) {
+    const [x1, y1] = rowAt(exEl.querySelector(`.crow[data-r="${temp.j}"]`));
+    html += `<line x1="${x1}" y1="${y1}" x2="${temp.x - b.left}" y2="${temp.y - b.top}" stroke="${ex.rows[temp.j].color}" stroke-width="4" stroke-linecap="round" stroke-dasharray="2 9" />`;
+  }
+  exEl.querySelector('svg.links').innerHTML = html;
+}
+const drawAll = () => { if (cur().kind === 3) cur().exs.forEach((_, e) => drawLinks(e)); };
+window.addEventListener('resize', drawAll);
+document.fonts?.ready.then(drawAll);
+
+function selectRow(ei, j){
+  cur().exs[ei].sel = j;
+  const exEl = document.querySelector(`.ex[data-e="${ei}"]`);
+  exEl.querySelectorAll('.crow[data-r]').forEach(el => el.classList.toggle('sel', +el.dataset.r === j));
+  exEl.querySelector('.ex-hint').textContent = '';
+}
+
+function toggleLink(ei, j, n){
+  const r = cur().exs[ei].rows[j];
+  if (r.solved) return;
+  if (r.links.has(n)) r.links.delete(n); else r.links.add(n);
+  r.wrong.delete(n);
+  if (r.status === 'no') {
+    r.status = ''; r.msg = '';
+    const el = document.querySelector(`.ex[data-e="${ei}"] .crow[data-r="${j}"]`);
+    el.classList.remove('no', 'flash'); el.querySelector('.q-msg').textContent = '';
+  }
+  drawLinks(ei);
+}
+
+// Drag from a problem to a number to draw a line; or tap a problem, then tap numbers.
+let drag = null;
+$('#list').addEventListener('pointerdown', e => {
+  if (cur().kind !== 3) return;
+  const rowEl = e.target.closest('.crow[data-r]'); if (!rowEl) return;
+  const ei = +rowEl.closest('.ex').dataset.e, j = +rowEl.dataset.r;
+  if (cur().exs[ei].rows[j].solved) return;
+  e.preventDefault();
+  selectRow(ei, j);
+  drag = { ei, j, x0:e.clientX, y0:e.clientY, moved:false };
+});
+window.addEventListener('pointermove', e => {
+  if (!drag) return;
+  if (Math.hypot(e.clientX - drag.x0, e.clientY - drag.y0) > 8) drag.moved = true;
+  if (drag.moved) drawLinks(drag.ei, { j:drag.j, x:e.clientX, y:e.clientY });
+});
+window.addEventListener('pointerup', e => {
+  if (!drag) return;
+  const d = drag; drag = null;
+  if (!d.moved) return;
+  const num = document.elementFromPoint(e.clientX, e.clientY)?.closest('.num');
+  if (num && +num.closest('.ex').dataset.e === d.ei) toggleLink(d.ei, d.j, +num.dataset.n);
+  else drawLinks(d.ei);
+});
+$('#list').addEventListener('click', e => {
+  if (cur().kind !== 3) return;
+  const num = e.target.closest('.num'); if (!num) return;
+  const exEl = num.closest('.ex'), ei = +exEl.dataset.e, ex = cur().exs[ei];
+  if (ex.sel == null) exEl.querySelector('.ex-hint').textContent = ' 👈 Tap a problem first';
+  else toggleLink(ei, ex.sel, +num.dataset.n);
+});
+
+async function checkConnect(){
+  const t = cur(), btn = $('#checkAllBtn');
+  btn.disabled = true;
+  for (const [ei, ex] of t.exs.entries()) for (const [j, r] of ex.rows.entries()) {
+    if (t !== cur()) { btn.disabled = false; return; } // tab switched mid-check
+    if (r.error || r.solved) continue;
+    const el = document.querySelector(`.ex[data-e="${ei}"] .crow[data-r="${j}"]`);
+    if (!r.links.size && r.answer.length) { r.msg = 'Draw your lines 👉'; el.querySelector('.q-msg').textContent = r.msg; continue; }
+    r.checks++;
+    const missing = r.answer.filter(n => !r.links.has(n)).length;
+    r.wrong = new Set([...r.links].filter(n => !r.answer.includes(n)));
+    el.classList.remove('ok', 'no', 'flash');
+    void el.offsetWidth; // restart the animation
+    if (!missing && !r.wrong.size) {
+      r.solved = true; r.status = 'ok';
+      if (r.checks === 1) { t.stars++; r.msg = '⭐ Great job!'; } else r.msg = '✅ Correct!';
+      if (ex.sel === j) { ex.sel = null; el.classList.remove('sel'); }
+      updateScore();
+    } else {
+      r.status = 'no';
+      r.msg = [r.wrong.size && `${r.wrong.size} wrong line${r.wrong.size > 1 ? 's' : ''}`,
+               missing && `${missing} more to find`].filter(Boolean).join(', ') + ' 🙂';
+    }
+    el.classList.add(r.status, 'flash');
+    el.querySelector('.q-msg').textContent = r.msg;
+    drawLinks(ei);
+    await sleep(350);
+  }
+  btn.disabled = false;
+}
+
+function renderList(){
+  if (cur().kind === 3) return renderConnect();
+  $('#list').innerHTML = cur().qs.map((q, i) => q.error
+    ? `<div class="q err"><div class="q-top"><span class="q-no">${i + 1}</span>
+         <span class="q-expr">"${esc(q.text)}": ${q.error}</span></div></div>`
+    : `<div class="q${q.solved ? ' ok' : ''}" data-i="${i}">
+         <div class="q-top"><span class="q-no">${i + 1}</span>
+           ${q.kind === 4
+             ? `<span class="q-expr vs"><span class="side-l">${q.L.text}</span> <span class="q-ans">?</span> <span class="side-r">${q.R.text}</span></span></div>`
+             : `<span class="q-expr">${leftText(q)} = ${rightHTML(q)}</span></div>`}
+         ${q.kind === 4
+           ? `<div class="opts three">${q.choices.map(v => `<button class="opt" data-v="${v}">${esc(v)}</button>`).join('')}</div>`
+           : `<div class="opts">${q.choices.map((v, k) => `<button class="opt" data-v="${v}"><b>${'ABCD'[k]}.</b>${v}</button>`).join('')}</div>`}
+         <div class="q-foot"><span class="q-msg"></span>
+           ${q.kind === 4 ? '' : '<button class="mini show" disabled title="Check your answer first">Explain 🎬</button>'}</div>
+       </div>`).join('');
+  // restore progress when switching tabs
+  cur().qs.forEach((q, i) => {
+    if (q.error) return;
+    const card = document.querySelector(`.q[data-i="${i}"]`);
+    if (q.checks && card.querySelector('.show')) card.querySelector('.show').disabled = false;
+    if (q.solved) {
+      card.querySelector('.q-ans').textContent = q.answer;
+      card.querySelectorAll('.opt').forEach(b => { b.disabled = true; if (b.dataset.v === String(q.answer)) b.classList.add('right'); });
+    } else if (q.picked != null) {
+      card.querySelector(`.opt[data-v="${q.picked}"]`).classList.add('picked');
+    }
+  });
+  updateScore();
+}
+
+function updateScore(){
+  const items = cur().kind === 3 ? cur().exs.flatMap(ex => ex.rows) : cur().qs;
+  $('#score').textContent = `${cur().stars} / ${items.filter(q => !q.error).length}`;
+}
+
+$('#list').addEventListener('click', e => {
+  const card = e.target.closest('.q[data-i]'); if (!card) return;
+  const q = cur().qs[+card.dataset.i];
+  const opt = e.target.closest('.opt');
+  if (opt && !q.solved && !opt.disabled) {
+    q.picked = opt.dataset.v;
+    card.querySelectorAll('.opt').forEach(b => b.classList.toggle('picked', b === opt));
+    card.classList.remove('no', 'flash');
+    card.querySelector('.q-msg').textContent = '';
+  }
+  if (e.target.closest('.show')) openShow(q);
+});
+
+// Grade every answered question, one row after another.
+async function checkAll(){
+  if (cur().kind === 3) return checkConnect();
+  const btn = $('#checkAllBtn');
+  const t = cur();
+  btn.disabled = true;
+  for (const [i, q] of t.qs.entries()) {
+    if (t !== cur()) break; // tab switched mid-check
+    if (q.error || q.solved) continue;
+    const card = document.querySelector(`.q[data-i="${i}"]`);
+    const msg = card.querySelector('.q-msg');
+    if (q.picked == null) { msg.textContent = 'Pick an answer 👆'; continue; }
+    q.checks++;
+    if (card.querySelector('.show')) card.querySelector('.show').disabled = false;
+    card.classList.remove('ok', 'no', 'flash');
+    void card.offsetWidth; // restart the animation
+    const sel = card.querySelector('.opt.picked');
+    sel.classList.remove('picked');
+    if (q.picked === String(q.answer)) {
+      q.solved = true;
+      sel.classList.add('right');
+      card.classList.add('ok', 'flash');
+      card.querySelectorAll('.opt').forEach(b => b.disabled = true);
+      card.querySelector('.q-ans').textContent = q.answer;
+      if (q.checks === 1 && !q.watched) { t.stars++; msg.textContent = '⭐ Great job!'; }
+      else msg.textContent = '✅ Correct!';
+      updateScore();
+    } else {
+      sel.classList.add('wrong');
+      sel.disabled = true;
+      q.picked = null;
+      card.classList.add('no', 'flash');
+      msg.textContent = 'Try again 🙂';
+    }
+    await sleep(350);
+  }
+  btn.disabled = false;
+}
+$('#checkAllBtn').addEventListener('click', checkAll);
+$('#resetBtn').addEventListener('click', () => { loadQuestions(); renderList(); });
+document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => {
+  tab = b.dataset.tab;
+  document.querySelectorAll('.tab').forEach(x => x.setAttribute('aria-selected', x === b));
+  $('.toolbar').hidden = cur().kind >= 3; // no Explain animation on these tabs
+  renderList();
+}));
+
+/* ---------- animation ---------- */
+const S = { display:'basic', theme:'cars', anim:'auto', p:null, steps:[], stepIdx:0, busy:false, vcount:0 };
+let run = 0; // increments to cancel a running animation
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+async function wait(ms, id){ await sleep(ms); if (id !== run) throw 'cancelled'; }
+
+const T = () => THEMES[S.theme];
+const noun = n => n === 1 ? T().one : T().many;
+const verb = (v, n) => T()[v][n === 1 ? 0 : 1];
+const isAre = n => n === 1 ? 'is' : 'are';
+const cap = html => $('#caption').innerHTML = html;
+const cells = () => [...document.querySelectorAll('#frame .cell')];
+
+// The big problem at the top of the popup. Stages: idle, apply1, merge, apply2, solve, finish.
+function renderExpr(stage){
+  const p = S.p;
+  let left;
+  if (stage === 'merge' || stage === 'apply2') {
+    const act = stage === 'apply2' ? ' active' : '';
+    left = [
+      { t:p.r1, cls:'merged' + (stage === 'merge' ? ' pop' : '') + act },
+      { t:sym(p.op2), cls:'op' + act },
+      { t:p.c, cls:act },
+    ];
+  } else if (stage === 'solve') {
+    left = [{ t:p.r2, cls:'merged pop' }];
+  } else {
+    const act = stage === 'apply1' ? [0,1,2] : [];
+    left = [p.a, sym(p.op1), p.b, sym(p.op2), p.c].map((t, i) =>
+      ({ t, cls:(i % 2 ? 'op' : '') + (act.includes(i) ? ' active' : '') }));
+  }
+  const ans = stage === 'finish' ? { t:p.answer, cls:'answer correct pop' }
+            : { t:'?', cls:'answer' + (stage === 'solve' ? ' active' : '') };
+  const right = p.kind === 1 ? [ans] : p.right.map(t =>
+    t === '?' ? ans : { t:typeof t === 'number' ? t : sym(t), cls:(typeof t === 'number' ? '' : 'op') + (stage === 'solve' ? ' active' : '') });
+  const toks = [...left, { t:'=', cls:'op' }, ...right];
+  $('#expr').innerHTML = toks.map(k => `<span class="tok ${k.cls}">${k.t}</span>`).join('');
+}
+
+function resetScene(){
+  $('#frame').className = 'frame ' + S.theme;
+  $('#frame').innerHTML = '<div class="cell"></div>'.repeat(MAX);
+  S.vcount = 0; $('#count').textContent = 0;
+  $('#work').innerHTML = '';
+}
+function addObj(){
+  const i = S.vcount, cell = cells()[i];
+  const glyph = T().items[i % T().items.length];
+  cell.innerHTML = `<span class="obj arrive ${T().flip ? 'flip' : ''}"><span class="g">${glyph}</span></span>`;
+  S.vcount++; $('#count').textContent = S.vcount;
+  return cell;
+}
+function removeObj(){
+  const cell = cells()[S.vcount - 1];
+  const obj = cell.querySelector('.obj');
+  obj.classList.remove('arrive'); obj.classList.add('leave');
+  setTimeout(() => { cell.innerHTML = ''; cell.classList.remove('going'); }, 500);
+  S.vcount--; $('#count').textContent = S.vcount;
+}
+
+/* Left side in two small calculations; kind 2 adds a third step for the right side. */
+function buildSteps(p){
+  const steps = [
+    { part:1, from:p.a,  op:p.op1, n:p.b, to:p.r1 },
+    { part:2, from:p.r1, op:p.op2, n:p.c, to:p.r2 },
+  ];
+  if (p.kind === 2) steps.push({ part:3 });
+  return steps;
+}
+
+const tokHTML = t => t === '?' ? '<span class="tok answer">?</span>'
+  : typeof t === 'number' ? `<span class="tok">${t}</span>` : `<span class="tok op">${t === '=' ? '=' : sym(t)}</span>`;
+
+function lineHTML(st, carry){
+  return `<div class="line" id="line${st.part}">` +
+    `<span class="tok${carry ? ' carry' : ''}">${st.from}</span><span class="tok op">${sym(st.op)}</span>` +
+    `<span class="tok">${st.n}</span><span class="tok op">=</span><span class="tok answer">?</span></div>`;
+}
+
+// A number flies from one spot to another (e.g. an answer carried to the next line).
+async function fly(src, dst, id){
+  const work = $('#work');
+  const w = work.getBoundingClientRect(), s = src.getBoundingClientRect(), d = dst.getBoundingClientRect();
+  const ghost = document.createElement('span');
+  ghost.className = 'tok carry ghost';
+  ghost.textContent = src.textContent;
+  Object.assign(ghost.style, { left:(s.left - w.left) + 'px', top:(s.top - w.top) + 'px', width:s.width + 'px', height:s.height + 'px' });
+  work.appendChild(ghost);
+  const dx = d.left - s.left, dy = d.top - s.top;
+  await ghost.animate([
+    { transform:'none' },
+    { transform:`translate(${dx / 2}px, ${dy / 2 - 30}px) scale(1.3)` },
+    { transform:`translate(${dx}px, ${dy}px)` },
+  ], { duration:1300, easing:'ease-in-out' }).finished;
+  if (id !== run) throw 'cancelled';
+  ghost.remove();
+  dst.style.visibility = '';
+}
+
+async function doStep(st, id){
+  if (st.part === 3) return solveRight(id);
+  const vis = S.display === 'visual';
+  const minus = st.op === '-';
+  const { a, op1, b } = S.p;
+  cells().forEach(x => x.classList.remove('new'));
+
+  if (st.part === 1) {
+    renderExpr('apply1');
+    $('#work').innerHTML = lineHTML(st, false);
+    $('#line1').classList.add('fade-in');
+    if (vis) {
+      cap(`There ${isAre(st.from)} <b>&nbsp;${st.from}&nbsp;</b> ${noun(st.from)}.`);
+      for (let i = 0; i < st.from; i++) { addObj(); await wait(200, id); }
+    } else {
+      cap(`Start at <b>&nbsp;${st.from}</b>.`);
+    }
+    await wait(900, id);
+  } else {
+    // Transition: carry the answer down to start the second problem.
+    cap(`${a} ${sym(op1)} ${b} = ${st.from}. Bring the <b>&nbsp;${st.from}&nbsp;</b> down 👇`);
+    renderExpr('merge');
+    $('#line1').classList.add('done');
+    $('#work').insertAdjacentHTML('beforeend', lineHTML(st, true));
+    const toks = [...$('#line2').children];
+    toks.forEach(t => t.style.visibility = 'hidden');
+    await wait(500, id);
+    await fly($('#line1 .answer'), toks[0], id);
+    if (vis) cells().slice(0, S.vcount).forEach(x => x.classList.add('carry'));
+    await wait(700, id);
+    cap(`Now we start with <b>&nbsp;${st.from}</b>.`);
+    for (const t of toks.slice(1)) { t.style.visibility = ''; t.classList.add('fade-in'); await wait(300, id); }
+    renderExpr('apply2');
+    await wait(900, id);
+    cells().forEach(x => x.classList.remove('carry'));
+  }
+
+  // The calculation itself.
+  if (vis) {
+    cap(minus ? `<b>${st.n}</b>&nbsp;${noun(st.n)} ${verb('outV', st.n)}. 👋`
+              : `<b>${st.n}</b>&nbsp;more ${noun(st.n)} ${verb('inV', st.n)}. 👋`);
+    await wait(500, id);
+    if (minus) {
+      cells().slice(S.vcount - st.n, S.vcount).forEach(x => x.classList.add('going'));
+      await wait(900, id);
+      for (let i = 0; i < st.n; i++) { removeObj(); await wait(500, id); }
+    } else {
+      for (let i = 0; i < st.n; i++) { addObj().classList.add('new'); await wait(500, id); }
+    }
+  } else {
+    cap(minus ? `Take away <b>&nbsp;${st.n}</b>.` : `Add <b>&nbsp;${st.n}</b>.`);
+    await wait(1200, id);
+  }
+  await wait(600, id);
+  const ans = $(`#line${st.part} .answer`);
+  ans.textContent = st.to; ans.classList.add('correct', 'pop');
+  cap(`${st.from} ${sym(st.op)} ${st.n} = <b>&nbsp;${st.to}</b>` +
+      (vis ? `.&nbsp;Now there ${isAre(st.to)} ${st.to} ${noun(st.to)}.` : ''));
+  await wait(900, id);
+
+  if (st.part === 2 && S.p.kind === 1) await finish(id);
+}
+
+// Kind 2, step 3: the right side must equal the left total, then find the "?".
+async function solveRight(id){
+  const p = S.p, vis = S.display === 'visual';
+  const L = p.r2, k = p.k, x = p.answer, plus = p.rop === '+';
+  cells().forEach(c => c.classList.remove('new'));
+
+  // Move the left total across: "? + 2 = 8".
+  cap(`${leftText(p)} = ${L}. The other side must be <b>&nbsp;${L}&nbsp;</b> too ⚖️`);
+  renderExpr('solve');
+  $('#line2').classList.add('done');
+  $('#work').insertAdjacentHTML('beforeend',
+    `<div class="line" id="line3">${[...p.right, '='].map(tokHTML).join('')}<span class="tok carry">${L}</span></div>`);
+  const l3 = [...$('#line3').children];
+  l3.forEach(t => t.style.visibility = 'hidden');
+  for (const t of l3.slice(0, -1)) { t.style.visibility = ''; t.classList.add('fade-in'); await wait(300, id); }
+  await wait(300, id);
+  await fly($('#line2 .answer'), l3[l3.length - 1], id);
+  await wait(800, id);
+
+  // Ask the question in kid words.
+  cap(plus ? `What number plus <b>&nbsp;${k}&nbsp;</b> makes ${L}?`
+      : p.qFirst ? `What number take away <b>&nbsp;${k}&nbsp;</b> leaves ${L}?`
+      : `${k} take away what number leaves <b>&nbsp;${L}</b>?`);
+  await wait(1800, id);
+
+  if (vis) {
+    if (plus) {
+      cells().slice(L - k, L).forEach(c => c.classList.add('new'));
+      cap(`<b>${k}</b>&nbsp;of the ${L} ${noun(L)} are the + ${k}.`);
+      await wait(1600, id);
+      cells().slice(0, L - k).forEach(c => c.classList.add('carry'));
+      cap(`The rest are the ?: <b>&nbsp;${x}&nbsp;</b> ${noun(x)}.`);
+      await wait(1600, id);
+    } else if (p.qFirst) {
+      cap(`Put back the <b>&nbsp;${k}&nbsp;</b> that were taken away.`);
+      await wait(600, id);
+      for (let i = 0; i < k; i++) { addObj().classList.add('new'); await wait(450, id); }
+      cells().slice(0, x).forEach(c => c.classList.add('carry'));
+      cap(`Now there ${isAre(x)} <b>&nbsp;${x}</b>.`);
+      await wait(1400, id);
+    } else {
+      cap(`Start with <b>&nbsp;${k}&nbsp;</b> ${noun(k)}.`);
+      for (let i = L; i < k; i++) { addObj(); await wait(300, id); }
+      await wait(700, id);
+      cells().slice(L, k).forEach(c => c.classList.add('going'));
+      cap(`${L} must stay, so <b>&nbsp;${x}&nbsp;</b> ${verb('outV', x)}.`);
+      await wait(1100, id);
+      for (let i = 0; i < x; i++) { removeObj(); await wait(450, id); }
+      await wait(600, id);
+    }
+  }
+
+  // Helper fact that finds the "?", e.g. 8 − 2 = 6.
+  const fact = plus ? [L, '-', k] : p.qFirst ? [L, '+', k] : [k, '-', L];
+  $('#work').insertAdjacentHTML('beforeend',
+    `<div class="line fade-in" id="line4">${[...fact, '=', '?'].map(tokHTML).join('')}</div>`);
+  cap(`Let's find it: ${fact[0]} ${sym(fact[1])} ${fact[2]} = ?`);
+  await wait(1300, id);
+  const a4 = $('#line4 .answer');
+  a4.textContent = x; a4.classList.add('correct', 'pop');
+  cap(`${fact[0]} ${sym(fact[1])} ${fact[2]} = <b>&nbsp;${x}</b>`);
+  await wait(1200, id);
+
+  // Carry the answer up into the "?".
+  const q3 = $('#line3 .answer');
+  q3.style.visibility = 'hidden';
+  await fly(a4, q3, id);
+  q3.textContent = x; q3.classList.add('correct', 'pop');
+  cap(`So ? = <b>&nbsp;${x}</b>`);
+  await wait(1100, id);
+  await finish(id);
+}
+
+async function finish(id){
+  const p = S.p;
+  renderExpr('finish');
+  const right = p.kind === 1 ? p.answer : p.right.map(t => t === '?' ? p.answer : typeof t === 'number' ? t : sym(t)).join(' ');
+  cap(`🎉&nbsp;${leftText(p)} = <b>&nbsp;${right}</b>&nbsp;🎉`);
+  if (S.display === 'visual') $('#frame').classList.add('party');
+  await wait(500, id);
+}
+
+function setStepInfo(){
+  $('#stepInfo').textContent = S.anim !== 'step' || !S.steps.length ? ''
+    : S.stepIdx ? `Step ${S.stepIdx} of ${S.steps.length}` : `${S.steps.length} steps`;
+}
+
+function stopShow(){
+  run++;
+  S.steps = []; S.stepIdx = 0; S.busy = false;
+  resetScene();
+  $('#nextBtn').hidden = true;
+  setStepInfo();
+  cap('');
+  if (S.p) renderExpr('idle');
+}
+
+async function show(){
+  stopShow();
+  const id = run;
+  S.steps = buildSteps(S.p);
+  if (S.anim === 'auto') {
+    try {
+      for (const st of S.steps) { await doStep(st, id); await wait(1000, id); }
+    } catch (e) { /* cancelled */ }
+  } else {
+    cap('Press <b>&nbsp;Next step&nbsp;</b> to see each step.');
+    $('#nextBtn').hidden = false; $('#nextBtn').disabled = false;
+    setStepInfo();
+  }
+}
+
+async function nextStep(){
+  if (S.busy || S.stepIdx >= S.steps.length) return;
+  const id = run;
+  S.busy = true; $('#nextBtn').disabled = true;
+  const st = S.steps[S.stepIdx++];
+  setStepInfo();
+  try { await doStep(st, id); }
+  catch (e) { return; }
+  finally { if (id === run) S.busy = false; }
+  if (S.stepIdx >= S.steps.length) $('#nextBtn').hidden = true;
+  else $('#nextBtn').disabled = false;
+}
+
+function openShow(q){
+  q.watched = true;
+  S.p = q;
+  $('#overlay').hidden = false;
+  show();
+}
+function closeShow(){
+  stopShow();
+  $('#overlay').hidden = true;
+}
+
+document.querySelectorAll('.group').forEach(g => g.addEventListener('click', e => {
+  const btn = e.target.closest('.seg'); if (!btn) return;
+  S[g.dataset.setting] = btn.dataset.val;
+  g.querySelectorAll('.seg').forEach(x => x.setAttribute('aria-pressed', x === btn));
+  $('#visualView').hidden = S.display !== 'visual';
+  $('#themeGroup').hidden = S.display !== 'visual';
+}));
+$('#nextBtn').addEventListener('click', nextStep);
+$('#replayBtn').addEventListener('click', show);
+$('#closeBtn').addEventListener('click', closeShow);
+$('#overlay').addEventListener('click', e => { if (e.target === $('#overlay')) closeShow(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#overlay').hidden) closeShow(); });
+
+loadQuestions('solve');
+loadQuestions('missing');
+loadQuestions('connect');
+loadQuestions('compare');
+renderList();
+</script>
+</body>
+</html>
